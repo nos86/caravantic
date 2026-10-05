@@ -8,13 +8,14 @@ Requisiti implementativi per i 4 canali di uscita configurabili per depopolazion
 
 ## 1. Principio
 
-**Quattro canali**, configurabili per depopolazione in tre varianti sullo stesso footprint:
+**Quattro canali**, configurabili per depopolazione in due varianti sullo stesso footprint *(rev. 2026-08-01: variante (III) a interlock on-board eliminata, limite relè da 10 A a 2 A)*:
 
 | Variante | Realizzazione | Carico |
 |---|---|---|
-| **(I)** | MOSFET **high-side** con PWM | Fino a 5 A continui, dimming LED |
-| **(II)** | Relè indipendente | 10 A |
-| **(III)** | Ibrida: 2 relè indipendenti + 2 relè in interlock | Inversione motori DC |
+| **(I)** | MOSFET **high-side** con PWM | Fino a **2 A continui**, dimming LED — riserva di incremento a ~5 A condizionata al piano di rame, vedi [`04b`](04b-relay-output-stage.md) §3.4 |
+| **(II)** | Relè indipendente (TE Axicom IM), contatto di scambio COM/NO/NC | **2 A** |
+
+> **Carichi oltre 2 A e motori DC: relè esterno.** Il canale della scheda (I o II) comanda la **bobina di un relè automotive esterno** — decine–centinaia di mA — e il relè esterno commuta il carico. L'inversione dei motori DC è realizzata dal **cablaggio di inversione dei contatti dei relè esterni** (REQ-IF-009 rev.), che conserva l'impossibilità topologica del corto già dimostrata per la vecchia variante (III). Selezione, fusibile e cablaggio del relè esterno sono requisiti di installazione; il canale che ne comanda la bobina shall avere il clamp di uscita popolato e la documentazione shall prescrivere il diodo di ricircolo ai capi della bobina esterna.
 
 > **I carichi hanno alimentazione propria esterna.** La board fornisce **solo il contatto di commutazione**: la corrente di carico non è prelevata dai rail della scheda e il ritorno non transita per la sua massa. Questo scarica i budget di REQ-EL-005 ed EL-007, ma **non** i requisiti su dimensionamento di piste e connettori.
 
@@ -54,14 +55,14 @@ Alternative scartate, con il motivo:
 
 > **Zener di clamp gate-source: non opzionale.** Con il partitore che tira il gate verso massa e la batteria a 16 V la V_GS è già prossima al limite tipico di ±20 V; durante un transitorio clampato — fino a ~38 V — lo supererebbe, distruggendo il gate.
 
-**Resistore di gate:** scelto per **rallentare i fronti**. A 1,5–2 kHz le perdite di commutazione sono trascurabili, quindi conviene privilegiare il contenimento del dV/dt e delle emissioni rispetto alla velocità di commutazione.
+**Rete di gate: dimensionata contro un tetto di perdite di commutazione**, non genericamente «per rallentare i fronti». L'ipotesi che a 1,5–2 kHz le perdite di commutazione siano trascurabili è stata verificata ed è **falsa**: restano il termine dominante a 2 A e superano di tre volte la conduzione a 5 A se i fronti sono lenti. Criterio: t_on + t_off ≤ 2·P_sw,max / (V·I·f). Vedi [`04b`](04b-relay-output-stage.md) §3.2 per i valori.
 
 **Level-shifter:** transistor o piccolo MOSFET che tira il gate verso massa attraverso il partitore, comandato dal GPIO a 3,3 V.
 
 ### 2.5 Dimensionamento
 
 - **V_DS ≥ 40 V**, coerente con la catena di ingresso.
-- **RDS(on)** tale da contenere la dissipazione a 5 A continui entro i limiti termici del package a 40 °C ambiente.
+- **RDS(on)** tale da contenere la dissipazione a **2 A continui** entro i limiti termici del package a 40 °C ambiente. A questa corrente la RDS(on) **non è il parametro dominante**: le perdite di commutazione superano quelle di conduzione, quindi il criterio di selezione è la V_DS ≥ 40 V e la capacità termica del package, non la resistenza di canale (vedi [`04b`](04b-relay-output-stage.md) §3.2–§3.4).
 - **Clamp** sull'uscita per i transitori residui su cavi e connettori lunghi.
 
 ### 2.6 PWM
@@ -78,7 +79,7 @@ Senza switch integrato **non c'è diagnostica per canale** di open-load e sovrat
 
 ---
 
-## 3. Varianti (II) e (III) — relè
+## 3. Variante (II) — relè
 
 ### 3.1 Driver di bobina
 
@@ -90,17 +91,17 @@ Senza switch integrato **non c'è diagnostica per canale** di open-load e sovrat
 
 ### 3.2 Isolamento
 
-Le varianti a relè sono le uniche che offrono **isolamento galvanico vero**: il carico può non condividere mai la massa della board.
+La variante a relè è l'unica che offre **isolamento galvanico vero**: il carico può non condividere mai la massa della board.
 
 Nella variante (I) il source del MOSFET e la massa scheda condividono il riferimento batteria−: **non è isolamento galvanico**, anche se il ritorno del carico non transita per la board.
 
-### 3.3 Interlock (variante III)
+### 3.3 Inversione motori DC — demandata ai relè esterni *(rev. 2026-08-01)*
 
-**Funzione.** Esclusione reciproca di due relè per l'inversione di motori DC — gradino, antenna: **mai entrambi attivi**, perché l'attivazione simultanea equivale a un cortocircuito sul motore o sull'alimentazione.
+La precedente variante (III) a coppia di relè in interlock **on-board è eliminata**: la scheda non commuta motori. L'inversione è realizzata da due relè esterni con i contatti cablati in configurazione di inversione — COM di ciascun relè a un morsetto del motore, i due NO uniti sul positivo del carico, i due NC sul negativo — che rende il corto positivo→negativo **topologicamente impossibile** qualunque sia lo stato delle bobine (REQ-IF-009, REQ-SAFE-002).
 
-> **L'esclusione shall essere garantita in hardware**, non dal solo firmware: cablaggio dei contatti in configurazione di inversione, oppure interblocco elettrico delle bobine. Un bug firmware o un glitch al boot non deve poter attivare entrambi i relè.
+Conseguenze da documentare nell'installazione: frenatura dinamica inerente nei due stati di riposo (ruota libera non ottenibile); diodo di ricircolo su ciascuna bobina esterna; TVS bidirezionale ai capi del motore; tempo morto firmware fra le due direzioni, congelato sul tempo di rilascio misurato dei relè esterni scelti.
 
-**Acceptance [B].** Forzando via software l'attivazione simultanea, il carico non è mai alimentato in configurazione di corto; l'ispezione dello schema conferma l'impossibilità topologica.
+**Acceptance [B].** Forzando via software l'attivazione simultanea delle due uscite di comando, il carico non è mai alimentato in configurazione di corto; l'ispezione dello **schema di cablaggio esterno** conferma l'impossibilità topologica.
 
 ---
 
@@ -148,7 +149,7 @@ Con topologia high-side il ritorno del carico **non transita per la massa della 
 
 **Morsettiera a vite 5,08 mm** per tutte e 4 le uscite, **sul bordo** della scheda.
 
-Rating tipico 10 A (UL) / 15 A (IEC): copre sia la variante MOSFET a 5 A continui sia quella a relè da 10 A.
+Rating tipico 10 A (UL) / 15 A (IEC): con il limite di canale a 2 A in entrambe le varianti è sovradimensionato, ma resta per robustezza meccanica del cablaggio da impianto e continuità di footprint (REQ-MECH-003).
 
 ---
 
@@ -158,9 +159,10 @@ Rating tipico 10 A (UL) / 15 A (IEC): copre sia la variante MOSFET a 5 A continu
 - [ ] Pull-up di gate presente su ogni canale MOSFET
 - [ ] Pull-down su ogni ingresso di driver di bobina
 - [ ] Diodo di ricircolo su ogni bobina
-- [ ] Interlock realizzato in hardware, verificato per ispezione topologica
+- [ ] Schema di cablaggio di inversione dei relè esterni incluso nella documentazione di installazione, verificato per ispezione topologica
 - [ ] Nessuna uscita assegnata a pin di strapping
-- [ ] Resistore di gate dimensionato per fronti lenti, non veloci
-- [ ] V_DS ≥ 40 V e dissipazione a 5 A/40 °C verificate a datasheet
+- [ ] Rete di gate dimensionata contro il tetto di perdite di commutazione ([`04b`](04b-relay-output-stage.md) §3.2), non «per fronti lenti»
+- [ ] V_DS ≥ 40 V verificata a datasheet; dissipazione a **2 A**/40 °C verificata con RθJA **misurata** [B], non stimata
+- [ ] Piano di rame di smaltimento sulla faccia opposta: tentato in layout ed esito riportato a verbale, anche restando a 2 A di requisito
 - [ ] Positivo commutato su traccia dedicata, separato dal rail dei regolatori
 - [ ] Requisito di installazione sui fusibili di ramo riportato nella documentazione

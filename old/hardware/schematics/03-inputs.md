@@ -21,23 +21,25 @@ Requisiti implementativi per i 5 canali di ingresso configurabili per depopolazi
 
 ---
 
-## 2. Protezione — comune a tutte le varianti
+## 2. Protezione del pin MCU/ADC — comune alle varianti esposte a fault di campo
 
-> **Nessuna eccezione.** La protezione si applica a tutte e tre le varianti, compresa la (I). L'ipotesi di lasciare il pin non protetto è stata scartata.
+> **Regola generale: nessuna eccezione per i canali non isolati.** La protezione si applica alle varianti (I) e (III), comprese le loro configurazioni interne (III-a, III-b e il caso di sensore resistivo riferito a 12 V, vedi §5). L'ipotesi di lasciare il pin non protetto in questi casi è stata scartata: il vincolo d'uso "contatti locali" non elimina il rischio di errore di cablaggio, e una restrizione d'uso senza riscontro visivo sulla scheda non è imponibile all'installatore.
 
-**Topologia.** Resistore serie + clamp verso rail 3,3 V e massa, su ogni canale, mantenendo la topologia diretta della variante (I) — nessun opto, nessun ADC dedicato.
+> **Eccezione motivata — Variante (II), opto-isolata.** Il nodo lato MCU di questa variante (collettore del foto-transistor) non è raggiungibile da un fault sul terminale di ingresso: l'isolamento galvanico dell'opto lo esclude strutturalmente, e l'unica sorgente elettrica di quel nodo è il pull-up verso il rail 3,3 V, già protetto a monte (PTC, MOSFET ideal-diode, TVS — vedi [`01-power-supply.md`](01-power-supply.md) §1). Resistore serie e clamp **non sono popolati** in questa variante. Il rischio residuo — guasto hard dell'opto (cortocircuito o breakdown collettore-emettitore) — è escluso dal design basis, coerentemente con l'esclusione dei guasti hard di sorgente già adottata in [`01-power-supply.md`](01-power-supply.md) §1.3.
+
+**Topologia (dove si applica la regola generale).** Resistore serie + clamp verso rail 3,3 V e massa, su ogni canale configurato come (I) o (III), mantenendo la topologia diretta della variante (I) — nessun opto, nessun ADC dedicato.
 
 **Dimensionamento.**
-- Resistore serie **1–4,7 kΩ (da congelare)**. Il valore interagisce con altri due parametri e non può essere scelto isolatamente: vedi §3.1 e §5.3.
+- Resistore serie **1–4,7 kΩ (da congelare)**. Il valore interagisce con altri due parametri e non può essere scelto isolatamente: vedi §3.1 e §5.3. Per il modo (III-b) va preferito il valore più basso compatibile con la protezione, per minimizzare la distorsione del partitore.
 - Clamp dimensionato per **24 V continui** e per i transitori ISO 7637-2 pulse 3.
 
-**Perché.** Un pin GPIO dell'ESP32-S3 ha rating assoluto −0,3…3,6 V: senza rete di protezione un fault verso i 12 V lo distrugge. Il vincolo d'uso "contatti locali" non elimina il rischio di errore di cablaggio, e una restrizione d'uso senza riscontro visivo sulla scheda non è imponibile all'installatore.
+**Perché.** Un pin GPIO dell'ESP32-S3 ha rating assoluto −0,3…3,6 V: senza rete di protezione un fault verso i 12 V lo distrugge. Vale per (I) e (III); non vale per (II) per il motivo esposto sopra.
 
 > **I 24 V sono un livello di fault da errore di cablaggio, non un'alimentazione supportata.** Il progetto è a sola alimentazione 12 V.
 
-**Acceptance [B].** 24 V DC applicati per 5 min su un canale campione di ciascuna variante: nessun danno, tensione al pin sempre < 3,6 V.
+**Acceptance [B].** 24 V DC applicati per 5 min su un canale campione configurato come (I) e su uno come (III): nessun danno, tensione al pin sempre < 3,6 V. Per la Variante (II), il test equivalente è applicare il fault sul terminale di ingresso e verificare che LED e foto-transistor dell'opto restino entro i limiti di datasheet — non è un test sul pin MCU, che resta strutturalmente fuori dal percorso di fault.
 
-**Costo.** Circa 2 componenti passivi per canale, su 5 canali.
+**Costo.** Circa 2 componenti passivi per canale sui canali configurati come (I) o (III); nessuno sui canali configurati come (II).
 
 ---
 
@@ -147,7 +149,7 @@ Ogni ingresso è portato su **due connettori in parallelo**, sullo stesso nodo e
 
 ## 9. Checklist di rilascio
 
-- [ ] Resistore serie e clamp presenti su tutti e 5 i canali, in tutte le varianti
+- [ ] Resistore serie e clamp presenti sui canali configurati come (I) o (III); non popolati sui canali configurati come (II) — isolamento galvanico e rail 3,3 V a monte verificati (§2)
 - [ ] Ponticello di selezione modo III-a / III-b su ogni canale analogico
 - [ ] Rail di eccitazione sezionabile, non permanente
 - [ ] Resistore serie di protezione conteggiato nel calcolo del partitore di (III-b)
