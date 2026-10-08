@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "easyeda-pro": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\Salvo\\Documents\\Projects\\easyeda_mcp\\dist\\index.js"
+      ]
+    }
+  }
+}
