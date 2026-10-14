@@ -20,13 +20,6 @@ QPT Ci B E NPN_PT
 .model NPN_PT NPN(IS=1e-14 BF={CTR/0.01} BR=1 VAF=100 CJE=5p CJC={CJCPT} RB=10 RC=5 TF={TFPT})
 .ends TLP293
 
-* --- NPN alta tensione MMBTA42 (Diodes DS30062 Rev.15) ---
-* VCEO 300 V; hFE min 25 @1 mA, 40 @10 mA (VCE 10 V); VBE(sat) max 0.9 V @20 mA/2 mA
-* BF = corner (min datasheet 40 @10 mA; tipico ~100-150 da Fig. hFE)
-.model QA42 NPN(IS=5e-14 BF={BFQ} NF=1 BR=4 VAF=150 IKF=0.1 ISE=1e-14 NE=1.5
-+ RB=10 RC=1 CJE=60p CJC=4p TF=2n TR=100n)
-* BV 300 V non modellata (ngspice BJT): verificata a posteriori su Vce simulata
-
 * --- Diodo serie BAV21W (VRRM 250 V, VF 1.25 V max @200 mA) ---
 .model DBAV21 D(IS=2e-9 N=1.9 RS=0.8 BV=250 IBV=100n CJO=2p TT=50n EG=1.11 XTI=3)
 
