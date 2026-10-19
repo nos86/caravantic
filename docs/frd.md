@@ -108,6 +108,8 @@ Funzioni: (a) lettura stato LED verde (POWER) e rosso (FAULT); (b) comando on/of
 
 *Topologia di requisito proposta:* relè di scambio a riposo trasparente — contatto NC = remote → inverter; eccitato = contatto della board → inverter, con stato dell'interruttore del remote letto come ingresso. Linee LED passanti, lette ad alta impedenza (≥ 100 kΩ, Assumed) per non alterarle.
 
+*Prescrizione (decisione utente, 2026-10-19):* il ramo di comando della board (contatto del relè → pin 5 dell'inverter) *shall* includere un **resistore serie da 0 Ω come placeholder**, sostituibile con ≈ 1,8 Ω (valore misurato del contatto del remote) se si scopre che l'inverter dipende da quel valore. Il ramo del remote non ha placeholder: il remote porta già i suoi 1,8 Ω. Il footprint va dimensionato dopo la misura della corrente sul contatto (**da congelare**). *Acceptance:* [B] con il placeholder a 0 Ω, HA accende e spegne l'inverter; se non accade, ripetere con 1,8 Ω e documentare l'esito.
+
 **REQ-IF-008** (Must, Confirmed) — Modbus RTU su RS485 verso meter SDM120 (board = master).
 
 **REQ-IF-010** (Must, Confirmed) — Il bus RS485 della board è **multi-drop ed estendibile** a slave futuri (es. slave diagnosi motore). Connettore con +12 V, GND, A, B per alimentare gli slave. Terminazione inseribile. Corrente massima erogabile agli slave da definire (OPEN-11).
@@ -129,7 +131,7 @@ Funzioni: (a) lettura stato LED verde (POWER) e rosso (FAULT); (b) comando on/of
 | ID | Domanda | Requisiti |
 |---|---|---|
 | ~~OPEN-01~~ | Chiuso 2026-10-05: diagnosi motore delegata a slave RS485 | IF-006 |
-| OPEN-02 | **[Ripreso 2026-10-19]** Remote inverter: RJ45 8 poli, piedinatura lato remote misurata (vedi IF-007). Restano lato inverter: polo del contatto a tensione di batteria; tensione a vuoto e corrente di corto sui pin LED in OFF/ON/FAULT; corrente sul contatto; selettore 0/I/II presente? | IF-007 |
+| OPEN-02 | **[Ripreso 2026-10-19]** Remote inverter: RJ45 8 poli, piedinatura lato remote misurata (vedi IF-007). Restano lato inverter: polo del contatto a tensione di batteria; tensione a vuoto e corrente di corto sui pin LED in OFF/ON/FAULT; corrente sul contatto; prova con ponticello a 0 Ω e a ~1,8 Ω al posto del remote (l'inverter dipende dal valore?); selettore 0/I/II presente? | IF-007 |
 | ~~OPEN-03~~ | Chiuso: sender resistivo 0–190 Ω | IF-003 |
 | OPEN-04 | Valvola acque chiare (3 fili DN15?) e pistone grigie: modelli, corrente di stallo, finecorsa | EL-003, EL-004 |
 | OPEN-05 | Sensore temperatura serbatoio: tipo (NTC, DS18B20…), scopo (antigelo?) | IF-004 |
@@ -184,3 +186,4 @@ Raccomandazione: **A** — coerente con REQ-IF-010 (bus estendibile): il comando
 | 2026-10-08 | EL-006: rimosso lo strobe; assorbimento IN-CEL a cellula attiva ≈ 1 mA accettato (era ≤ 0,1 mA Assumed) | Decisione utente |
 | 2026-10-08 | EL-006: IN-CAB dalla radio, cavo 0,5 mm². EL-008: R1 in 0805, rischio load dump accettato. Topologia senza D1 in serie | Decisione utente |
 | 2026-10-19 | IF-007: piedinatura RJ45 del remote misurata (comune pin 2, LED verde pin 4, rosso pin 7, contatto 3–5), nessuna resistenza di limitazione nel remote; OPEN-02 ripreso, restano le misure lato inverter | Misure utente |
+| 2026-10-19 | IF-007: contatto 3–5 ≈ 1,8 Ω in ON, aperto in OFF; placeholder 0 Ω in serie al ramo di comando della board | Misure e decisione utente |
