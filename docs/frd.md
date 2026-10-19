@@ -1,7 +1,7 @@
 # Caravantic Board rev. 2 — Functional Requirements
 
 Status: **Draft**
-Last updated: 2026-10-08
+Last updated: 2026-10-19
 
 ## 1. Contesto e scopo
 
@@ -86,7 +86,25 @@ Funzioni: (a) lettura stato LED verde (POWER) e rosso (FAULT); (b) comando on/of
 - Livelli misurati sui pin LED: ~2,7 V (utente *shinikveech*) e 3,8 V verde / poco meno rosso (utente *Timmerich*).
 - **Connettore variabile per modello:** RJ12 6P6C o RJ11 6P4C sui modelli più vecchi; **RJ45 8 poli** sui più recenti, con cicalino nel remote. Su un RJ45 1000 W: contatto su pin 3–5, LED verde pin 2, rosso pin 4, massa pin 7 (*Timmerich*). Un altro utente con RJ45 non è riuscito ad accendere cortocircuitando coppie di fili: la piedinatura RJ45 **non è univoca**.
 - Inverter con selettore 0 / I / II: in II lo stato è governato dal remote (*Dr.HD*).
-*Non confermato su questo modello:* tipo di connettore e piedinatura. Da misurare (OPEN-02).
+*Misure sul modello in uso* (utente, 2026-10-19). Remote Renogy con interruttore a bilanciere ON/OFF, LED rosso (simbolo ⚠) e verde (simbolo ⏻), nessun display; etichetta posteriore "Item / Article AA5603" (relazione con la sigla dell'inverter non verificata). Cavo con **spina RJ45 8 poli** (foto). Misure fatte **sulla spina del remote, scollegato dall'inverter** (dispositivo passivo, nessuna tensione applicata), con multimetro FNIRSI DMT-99 in modalità diodo, REL e HOLD disattivati:
+
+| Pin | Funzione nel remote | Filo (Assumed) | Evidenza |
+|---|---|---|---|
+| 1 | NC | grigio | schizzo utente |
+| 2 | **Comune dei LED** (catodi) | arancione | rosso su 7 e nero su 2: 1,84 V; rosso su 4 e nero su 2: 1,96 V |
+| 3 | Polo del contatto interruttore (nello schizzo: "+12 V", **Assumed**) | nero | 1,9 Ω fra 3 e 5; posizione dell'interruttore non registrata |
+| 4 | **Anodo LED verde** (POWER) | rosso | 1,96 V in modalità diodo |
+| 5 | Polo del contatto interruttore (nello schizzo: "VIN", **Assumed**) | verde | come pin 3 |
+| 6 | NC | giallo | schizzo utente |
+| 7 | **Anodo LED rosso** (FAULT) | blu | 1,84 V in modalità diodo |
+| 8 | NC | marrone | schizzo utente |
+
+- L'abbinamento fili/pin segue l'ordine della lista nello schizzo (ipotesi): non vincola il progetto, che lavora sui pin.
+- La corrente di prova del DMT-99 non è nota: le cadute in modalità diodo non sono tensioni di esercizio.
+- **Prova con alimentatore e amperometro** (pin 2 a massa, utente): a circa 2 V la corrente passa da 5 a 10 mA per ~0,1 V (valori approssimati; LED non specificato). Resistenza totale ≲ 20 Ω, compresa la resistenza dinamica del LED ⇒ **nessuna resistenza di limitazione nel remote**. Ne segue, per inferenza, che la limitazione è nell'inverter: da confermare con tensione a vuoto e corrente di corto lato inverter.
+- La piedinatura **differisce da quella del forum** (verde pin 2, rosso 4, massa 7): conferma che non è univoca.
+- Implicazioni per la board (da recepire nel progetto): (i) la board *shall not* pilotare i pin 4 e 7, perché a valle non c'è limitazione di corrente; (ii) a LED acceso la linea è bloccata a ~1,8–2 V, quindi la soglia di lettura va definita su quel livello: un GPIO a 3,3 V potrebbe non leggerlo come alto (VIH dell'ESP32-S3 non verificato su datasheet), valutare ADC1 (≤ 2,45 V) o comparatore; (iii) l'unica via di comando è il contatto fra i pin 3 e 5.
+*Ancora da misurare (lato inverter, OPEN-02):* quale polo del contatto porta la tensione di batteria; tensione a vuoto e corrente di corto sui pin 4 e 7 in OFF, ON, FAULT; corrente sul contatto; presenza del selettore 0 / I / II sull'inverter.
 
 *Topologia di requisito proposta:* relè di scambio a riposo trasparente — contatto NC = remote → inverter; eccitato = contatto della board → inverter, con stato dell'interruttore del remote letto come ingresso. Linee LED passanti, lette ad alta impedenza (≥ 100 kΩ, Assumed) per non alterarle.
 
@@ -111,7 +129,7 @@ Funzioni: (a) lettura stato LED verde (POWER) e rosso (FAULT); (b) comando on/of
 | ID | Domanda | Requisiti |
 |---|---|---|
 | ~~OPEN-01~~ | Chiuso 2026-10-05: diagnosi motore delegata a slave RS485 | IF-006 |
-| OPEN-02 | **[Sospeso 2026-10-05]** Remote inverter: RJ12 o RJ45? Selettore 0/I/II presente? Piedinatura: continuità interruttore, pin LED, masse; tensioni per pin in OFF/ON/FAULT | IF-007 |
+| OPEN-02 | **[Ripreso 2026-10-19]** Remote inverter: RJ45 8 poli, piedinatura lato remote misurata (vedi IF-007). Restano lato inverter: polo del contatto a tensione di batteria; tensione a vuoto e corrente di corto sui pin LED in OFF/ON/FAULT; corrente sul contatto; selettore 0/I/II presente? | IF-007 |
 | ~~OPEN-03~~ | Chiuso: sender resistivo 0–190 Ω | IF-003 |
 | OPEN-04 | Valvola acque chiare (3 fili DN15?) e pistone grigie: modelli, corrente di stallo, finecorsa | EL-003, EL-004 |
 | OPEN-05 | Sensore temperatura serbatoio: tipo (NTC, DS18B20…), scopo (antigelo?) | IF-004 |
@@ -126,6 +144,7 @@ Funzioni: (a) lettura stato LED verde (POWER) e rosso (FAULT); (b) comando on/of
 ## 4. Registro assunzioni
 
 - Alimentazione, soglie ingressi 12 V, ambiente: ripresi da rev. 1 e da `frd-positioning-board.md`, non riconfermati per rev. 2.
+- IF-007: ruolo "+12 V" / "VIN" dei pin 3 e 5, abbinamento colori/pin e limitazione di corrente dei LED nell'inverter sono ipotesi; i pin LED e il comune (pin 2) sono misurati sul remote.
 
 ## 5. Mappa di riuso da `old/`
 
@@ -164,3 +183,4 @@ Raccomandazione: **A** — coerente con REQ-IF-010 (bus estendibile): il comando
 | 2026-10-08 | EL-006: opto PC817 → TLP293 GB; circuito ingressi semplificato (senza generatore di corrente), simulata anche la variante non GB | Richiesta utente |
 | 2026-10-08 | EL-006: rimosso lo strobe; assorbimento IN-CEL a cellula attiva ≈ 1 mA accettato (era ≤ 0,1 mA Assumed) | Decisione utente |
 | 2026-10-08 | EL-006: IN-CAB dalla radio, cavo 0,5 mm². EL-008: R1 in 0805, rischio load dump accettato. Topologia senza D1 in serie | Decisione utente |
+| 2026-10-19 | IF-007: piedinatura RJ45 del remote misurata (comune pin 2, LED verde pin 4, rosso pin 7, contatto 3–5), nessuna resistenza di limitazione nel remote; OPEN-02 ripreso, restano le misure lato inverter | Misure utente |
