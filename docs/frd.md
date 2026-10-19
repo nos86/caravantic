@@ -92,7 +92,7 @@ Funzioni: (a) lettura stato LED verde (POWER) e rosso (FAULT); (b) comando on/of
 |---|---|---|---|
 | 1 | NC | grigio | schizzo utente |
 | 2 | **Comune dei LED** (catodi) | arancione | rosso su 7 e nero su 2: 1,84 V; rosso su 4 e nero su 2: 1,96 V |
-| 3 | Polo del contatto interruttore (nello schizzo: "+12 V", **Assumed**) | nero | fra 3 e 5: 1,9 Ω con interruttore su ON, aperto su OFF (nessun altro stato, utente); non noto se al netto dei puntali |
+| 3 | Polo del contatto interruttore (nello schizzo: "+12 V", **Assumed**) | nero | fra 3 e 5: 1,9 Ω con interruttore su ON, aperto su OFF (nessun altro stato, utente); puntali in corto: 0,1 Ω, quindi contatto ≈ 1,8 Ω al netto |
 | 4 | **Anodo LED verde** (POWER) | rosso | 1,96 V in modalità diodo |
 | 5 | Polo del contatto interruttore (nello schizzo: "VIN", **Assumed**) | verde | come pin 3 |
 | 6 | NC | giallo | schizzo utente |
