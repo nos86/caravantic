@@ -1,0 +1,516 @@
+name: Create Hardware Development Plan Issues
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Issue 1 — Alimentazione e protezioni
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[HW] Alimentazione e protezioni',
+              labels: ['feature'],
+              body: `## Requisiti tecnici — 01 Alimentazione e protezioni
+
+**Traceability:** REQ-EL-001, EL-002, EL-003, EL-004, EL-005, EL-006, EL-007, EL-009, EL-010, SAFE-001, IF-016, ENV-001, LIFE-001
+
+---
+
+### Catena di ingresso
+
+Realizzare la catena in ordine vincolante dal morsetto verso i regolatori:
+
+\`\`\`
+Morsetto 5,08 mm ──[PTC]──[P-MOSFET ideal-diode]──[Clamp TVS]──[Filtro EMI]──┬──→ Buck 3,3V
+   (2 poli)                                                                   └──→ Load-switch → Buck 5V
+\`\`\`
+
+- **PTC resettabile** in serie al positivo, hold current > picco board con relè eccitati (derating a +40°C); leakage da minimizzare per lo stato OFF
+- **P-MOSFET ideal-diode** (source verso ingresso, drain verso valle): V_DS ≥ 40 V; Zener di clamp gate-source non opzionale; RDS(on) per contenere caduta alla corrente massima
+- **Clamp TVS**: V_RWM 20–24 V (da congelare); V_C alla corrente di picco < 40 V (rating assoluto del buck); impedenza serie obbligatoria (PTC + MOSFET + ferrite) tra clamp e buck
+- **Filtro EMI**: footprint LC/pi + choke di modo comune, non popolati di default; ponticelli di corto sui footprint per continuità con filtro assente
+
+### Logica di accensione
+
+- **Ingresso WAKEUP**: optoisolatore lato campo 9–16 V, uscita verso logica latch e GPIO RTC dell'MCU
+- **Power-latch**: abilita buck 3,3 V; set da WAKEUP, reset da power-hold MCU; sequenza vincolante — l'MCU deve asserire power-hold al boot prima che WAKEUP venga rimosso; nessun percorso hardware che bypassi il power-hold
+
+### Rail di alimentazione
+
+| Rail | Sorgente | Note |
+|------|----------|------|
+| 3,3 V always-on | Buck a valle del latch | Rating ≥ 40 V, range 9–18 V |
+| 5 V motori | Buck dedicato dietro load-switch | ≥ 2,5 A di picco, bulk dimensionato sul transitorio di stallo servo |
+| Periferiche | Load-switch da 3,3 V | Sezionabile |
+
+### Stato OFF e deep-sleep
+
+- **OFF**: nessun ramo permanente a battery+; leakage totale calcolato e annotato in BOM
+- **Deep-sleep**: ≤ 1 mA a 12,8 V (contributi: quiescente buck, MCU, transceiver, expander, LED RGB modulo)
+
+### Masse
+
+- Massa di potenza e massa di segnale separate, ricongiunte in star-ground presso l'ingresso
+- Positivo commutato verso source MOSFET high-side su traccia dedicata, disaccoppiata dal rail regolatori
+
+### Checklist di rilascio
+
+- [ ] V_C del TVS < rating buck con impedenza serie conteggiata
+- [ ] Rating ≥ 40 V su MOSFET, TVS ed entrambi i buck
+- [ ] Zener di clamp gate-source sul MOSFET di inversione
+- [ ] Nessun ramo permanente al positivo oltre alle protezioni
+- [ ] Somma leakage in OFF calcolata e annotata
+- [ ] Ponticelli di continuità sul filtro EMI
+- [ ] Corrente di hold PTC verificata con derating a +40°C
+- [ ] Spegnimento subordinato al rilascio del power-hold`
+            });
+            console.log('Issue 1 created');
+
+      - name: Issue 2 — Microcontrollore (ESP32-S3-Tiny)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[HW] Microcontrollore (ESP32-S3-Tiny)',
+              labels: ['feature'],
+              body: `## Requisiti tecnici — 02 Microcontrollore
+
+**Traceability:** §4 specifica di sistema, REQ-IF-003, IF-011, MECH-002, SAFE-003, SW-004, SW-005, DIAG-002, EL-005, EL-006
+
+---
+
+### Modulo
+
+**Waveshare ESP32-S3-Tiny** — ESP32-S3FH4R2, dual-core LX7 240 MHz, 4 MB Flash + 2 MB PSRAM, 34 GPIO, ~23,5 × 18 mm; scheda adattatrice USB separata via FPC 8 pin.
+
+- Alimentato dal rail 3,3 V always-on a valle del power-latch
+- Keep-out di antenna sul PCB portante (nessun rame sotto/intorno all'area antenna)
+- Modulo posizionato a filo del bordo
+- Connettore FPC accessibile a scheda montata (REQ-MECH-002)
+- Range di immagazzinamento verificato e annotato
+
+### Allocazione dei pin
+
+Produrre la tabella completa prima di procedere con lo schema. Fabbisogno: **24–25 GPIO diretti** su 34 disponibili (−2 USB nativo, −1 LED RGB GPIO14, −3/4 strapping).
+
+| Funzione | GPIO | Vincolo |
+|----------|------|---------|
+| 5 ingressi configurabili | 5 | ADC1 per analogici |
+| 4 uscite di potenza PWM | 4 | Non su pin strapping |
+| TMC2209 (STEP/DIR/EN/UART/DIAG) | 5–6 | GPIO diretto, vincoli temporali |
+| 2 PWM servo | 2 | Timer indipendenti |
+| Sense corrente motori | 1 | ADC1 obbligatorio |
+| CAN (TX/RX/STB) | 3 | GPIO diretto |
+| I²C (SDA/SCL) | 2 | GPIO diretto |
+| Power-hold | 1 | GPIO diretto |
+| WAKEUP | 1 | Pin dominio RTC |
+| LED/load-switch | — | I/O expander |
+
+**Vincoli inderogabili di assegnazione:**
+1. ADC1 obbligatorio per tutti i segnali analogici (ADC2 non affidabile con WiFi)
+2. Nessuna uscita di potenza né LED su pin di strapping
+3. WAKEUP su pin del dominio RTC
+4. GPIO 14 riservato al LED RGB del modulo
+5. Pin USB nativo riservati all'adattatore FPC
+
+### Boot, reset e programmazione
+
+- **Nessun convertitore USB-seriale** sulla portante; programmazione via scheda adattatrice
+- Modulo integra il circuito di download automatico (no replica DTR/RTS)
+- Canali OTA: USB cablato, OTA su CANopen, OTA su WiFi (solo nodo bridge) — nessun hardware aggiuntivo
+
+> **Vincolo Flash:** OTA richiede due partizioni applicative; frontend Vue deve essere ospitato esternamente
+
+### Watchdog e memoria non volatile
+
+- Watchdog abilitato con reset verso stato sicuro passivo — nessun componente esterno
+- NVM per Node-ID LSS, parametri debounce, limiti corrente motori, calibrazioni
+- **Node-ID da Base MAC address** ESP32-S3 via eFuse — no DIP-switch né jumper
+
+### Checklist di rilascio
+
+- [ ] Tabella allocazione pin completa e verificata contro i 5 vincoli inderogabili
+- [ ] Sense corrente e ingressi analogici su ADC1
+- [ ] Nessuna uscita di potenza né LED su pin strapping
+- [ ] WAKEUP su pin RTC
+- [ ] Keep-out antenna rispettata, modulo a filo del bordo
+- [ ] Connettore FPC accessibile a scheda montata
+- [ ] Consumo deep-sleep del modulo misurato contro budget 1 mA
+- [ ] Pin liberi portati su test point`
+            });
+            console.log('Issue 2 created');
+
+      - name: Issue 3 — Ingressi configurabili (5 canali)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[HW] Ingressi configurabili (5 canali)',
+              labels: ['feature'],
+              body: `## Requisiti tecnici — 03 Ingressi configurabili
+
+**Traceability:** REQ-IF-004, IF-005, IF-006, IF-007, MECH-003, EL-004, EL-005, DIAG-001
+
+---
+
+### Principio
+
+5 canali identici, ciascuno configurabile per depopolazione su stesso footprint:
+
+| Variante | Dominio | Uso |
+|----------|---------|-----|
+| (I) Contatto secco | 3,3 V logico | Reed, microswitch, finecorsa locali |
+| (II) Opto-isolato | 12 V batteria (9–16 V) | Segnali impianto camper |
+| (III-a) Analogico in tensione | 0–16 V lato campo | Sensori con uscita in tensione |
+| (III-b) Analogico resistivo | Eccitazione a bordo | NTC, sonde di livello, potenziometri |
+
+### Protezione comune (tutte le varianti, nessuna eccezione)
+
+- **Resistore serie 1–4,7 kΩ** (da congelare) + clamp verso 3,3 V e massa su ogni canale
+- Clamp dimensionato per **24 V continui** e transitori ISO 7637-2 pulse 3
+- Acceptance [B]: 24 V DC per 5 min su canale campione → nessun danno, V_pin < 3,6 V
+
+### Variante (I) — Contatto secco
+
+- Pull-up esterno definito ~10 kΩ (non pull-up interno MCU, troppo impreciso)
+- Rete RC di debounce **τ = 1 ms** calcolata su pull-up esterno + R serie + C (non solo C)
+
+### Variante (II) — Opto-isolato
+
+- Soglie: attivo ≥ 8 V, inattivo ≤ 2 V
+- R di limitazione: corrente sufficiente a 8 V, dissipazione ammessa a 16 V
+- Lato MCU su rail periferiche (sezionabile): nessun assorbimento in deep-sleep
+
+### Variante (III) — Analogica
+
+- **Ponticello di saldatura** per selezionare modo III-a (attenuazione tensione esterna) vs III-b (eccitazione sensore resistivo) — senza questo il canale NTC non è utilizzabile
+- **Rail di eccitazione sezionabile** (load-switch o GPIO): ~165 µA/canale permanente sfora il budget deep-sleep da solo
+- Resistore serie di §2 entra nel partitore III-b: includere nel calcolo della caratteristica o compensare a firmware
+- **Fondo scala ≤ 2,45 V** (sopra, l'ADC ESP32-S3 con att. 11 dB esce dal range linearizzato)
+- Tutti i canali analogici su **ADC1** (ADC2 inaffidabile con WiFi)
+
+### Debounce hardware
+
+- Costante RC 1 ms su ogni ingresso, a valle del R serie
+- Complemento firmware: debounce configurabile 10–100 ms
+
+### Ingresso WAKEUP
+
+Non è uno dei 5 canali: sempre opto-isolato, trattato in 01-power-supply.md §2.1
+
+### Connettori (per ogni canale)
+
+- **Morsettiera a vite 2,54 mm** sul bordo (cavi sfusi)
+- **JST XH 2,5 mm** (anche interno al PCB, per sensori con codino crimpato)
+- I due connettori di uno stesso canale sono in parallelo: usarli in alternativa
+
+### Checklist di rilascio
+
+- [ ] R serie + clamp su tutti e 5 i canali in tutte le varianti
+- [ ] Ponticello selezione modo III-a/III-b su ogni canale analogico
+- [ ] Rail di eccitazione sezionabile
+- [ ] R serie di protezione nel calcolo partitore III-b
+- [ ] Costante RC calcolata su pull-up esterno
+- [ ] Ingressi analogici su ADC1
+- [ ] Fondo scala ≤ 2,45 V su ogni ingresso analogico
+- [ ] Doppio connettore in parallelo, morsettiere sul bordo`
+            });
+            console.log('Issue 3 created');
+
+      - name: Issue 4 — Uscite di potenza (4 canali)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[HW] Uscite di potenza (4 canali)',
+              labels: ['feature'],
+              body: `## Requisiti tecnici — 04 Uscite di potenza
+
+**Traceability:** REQ-IF-008, IF-009, SAFE-001, SAFE-002, SAFE-003, EL-004, EL-009, MECH-003, LIFE-001
+
+---
+
+### Principio
+
+4 canali configurabili per depopolazione su stesso footprint:
+
+| Variante | Realizzazione | Carico |
+|----------|---------------|--------|
+| (I) | P-MOSFET high-side con PWM | Fino a 5 A continui, dimming LED |
+| (II) | Relè indipendente | 10 A |
+| (III) | 2 relè indipendenti + 2 relè in interlock | Inversione motori DC |
+
+> La board fornisce solo il contatto di commutazione: la corrente di carico non transita per la massa della scheda.
+
+### Variante (I) — P-MOSFET high-side
+
+**Topologia:**
+\`\`\`
+Battery+ ──[P-MOSFET]── Carico ── massa telaio (esterna)
+\`\`\`
+- Level-shifter dal GPIO 3,3 V verso battery+
+- **Pull-up gate-source** verso battery+: garantisce OFF con GPIO flottante (stato sicuro passivo)
+- **Zener di clamp gate-source: non opzionale** — con battery a 16 V e transitorio clampato a ~38 V il gate sarebbe distrutto senza Zener
+- Resistore di gate per fronti lenti (1,5–2 kHz, perdite di commutazione trascurabili)
+- **V_DS ≥ 40 V**; RDS(on) per contenere dissipazione a 5 A / 40°C ambiente
+- Clamp sull'uscita per transitori residui su cavi lunghi
+
+**PWM:** frequenza nominale **1,5–2 kHz**, configurabile per canale a firmware
+
+### Varianti (II) e (III) — Relè
+
+- Transistor/MOSFET low-side con **pull-down** sull'ingresso del driver (bobina diseccitata al reset MCU/expander)
+- **Diodo di ricircolo** in antiparallelo sulla bobina
+- Alimentazione bobina dietro load-switch (disalimentata in deep-sleep)
+- **Interlock variante III: garantito in hardware** (mai solo firmware) — cablaggio contatti in inversione o interblocco elettrico delle bobine; Acceptance [B]: forzando attivazione simultanea via SW, il carico non è mai in corto
+
+### Protezione da sovracorrente
+
+Nessuna protezione a bordo sui circuiti di carico (quadro camper provvede); documentare il rischio residuo nella documentazione di montaggio.
+
+### Stato sicuro (al power-on, brown-out, reset watchdog)
+
+Tutte le uscite in stato disattivato senza dipendere dal firmware:
+
+| Stadio | Rete passiva richiesta |
+|--------|------------------------|
+| P-MOSFET high-side | Pull-up di gate verso source |
+| Driver di bobina relè | Pull-down sull'ingresso driver |
+| Enable load-switch (via expander) | Pull-down — expander non inizializzato → sezioni disalimentate |
+
+> Uscite di potenza **non** su pin di strapping dell'MCU.
+
+### Distribuzione
+
+- Positivo commutato verso source MOSFET su traccia/piano dedicato, disaccoppiato dal rail regolatori
+- Bobine relè (low-side): ritorno su massa di potenza, separata da quella di segnale
+
+### Connettori
+
+**Morsettiera a vite 5,08 mm** per tutte e 4 le uscite, sul bordo della scheda (rating 10 A UL / 15 A IEC).
+
+### Checklist di rilascio
+
+- [ ] Zener di clamp gate-source su ogni P-MOSFET
+- [ ] Pull-up di gate presente su ogni canale MOSFET
+- [ ] Pull-down su ogni ingresso driver di bobina
+- [ ] Diodo di ricircolo su ogni bobina
+- [ ] Interlock realizzato in hardware, verificato per ispezione topologica
+- [ ] Nessuna uscita su pin di strapping
+- [ ] Resistore di gate dimensionato per fronti lenti
+- [ ] V_DS ≥ 40 V e dissipazione a 5 A/40°C verificate a datasheet
+- [ ] Positivo commutato su traccia dedicata
+- [ ] Requisito fusibili di ramo documentato per l'installatore`
+            });
+            console.log('Issue 4 created');
+
+      - name: Issue 5 — Motori e monitoraggio corrente
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[HW] Motori e monitoraggio corrente',
+              labels: ['feature'],
+              body: `## Requisiti tecnici — 05 Motori e monitoraggio
+
+**Traceability:** REQ-IF-010, IF-011, EL-007, EL-004, SW-001, LIFE-001, DIAG-001
+
+---
+
+### Perimetro
+
+| Attuatore | Quantità | Driver |
+|-----------|----------|--------|
+| Stepper | 1 | TMC2209 |
+| Servo RC | 2 | PWM diretto da GPIO |
+
+Tutti alimentati dal rail **5 V motori** (buck dedicato ≥ 2,5 A di picco, dietro load-switch).
+
+> **Vincolo di sistema:** il firmware garantisce che **un solo servo si muova alla volta**. Questo è il presupposto del dimensionamento del rail e del sense aggregato.
+
+### Driver stepper — TMC2209
+
+- **2 A RMS, 2,8 A di picco**, interfaccia STEP/DIR + configurazione via UART
+- Package QFN, compatibile con processo reflow
+- Tutti i segnali (STEP, DIR, EN, UART, DIAG) su **GPIO diretti dell'MCU** (mai sull'expander — vincoli temporali)
+- MS1/MS2 per indirizzo UART fissati a livelli statici
+
+**Compatibilità con i due motori target (stesso driver, parametro firmware diverso):**
+- **28BYJ-48** (modificato bipolare): **~100 mA/fase** — limite critico, oltre questa soglia il motore fonde; la modifica bipolare è manuale (taglio pista interna, rimozione filo rosso)
+- **NEMA17**: fino a 1,2 A/fase
+
+### Servo RC
+
+- Segnale 50 Hz, impulso 1–2 ms, da GPIO con timer indipendente
+- Alimentazione 5 V motori
+- Connettori 3 poli standard servo (ammessi interni al PCB)
+- Dimensionamento sul caso peggiore **MG90S** (stallo fino a ~1,5 A)
+- Acceptance [B]: jitter sull'impulso < ±10 µs
+
+### Monitoraggio corrente
+
+**Stepper:** StallGuard4 integrato nel TMC2209 — nessun sense esterno; lettura via UART (registro \`SG_RESULT\`) o pin DIAG.
+
+**Servo — sense aggregato:**
+\`\`\`
+Buck 5V ──[Shunt 33 mΩ]──┬──→ Stepper
+                          ├──→ Servo 1
+       └──[INA180A1]──→ ADC1
+\`\`\`
+
+| Parametro | Valore |
+|-----------|--------|
+| Shunt | **33 mΩ**, package **1206** (dissipazione ~0,21 W al picco, oltre il rating 0805) |
+| INA180A1 gain | 20 V/V |
+| Fondo scala | ~1,65 V a 2,5 A (< 2,45 V, nella zona lineare ADC) |
+| Risoluzione a riposo | ~66 mV a 100 mA |
+
+- INA180 e rail servo su **load-switch** (disalimentati in deep-sleep)
+- Canale **ADC1 obbligatorio** (ADC2 inaffidabile con WiFi)
+- Il filtro sull'uscita dell'INA180 non deve essere così lento da consumare il margine dei 200 ms di rilevazione battuta
+
+### Finecorsa virtuali
+
+- Rilevazione battuta meccanica dall'assorbimento, senza finecorsa fisici
+- Acceptance [B]: battuta rilevata entro **200 ms**, motore de-energizzato prima di danni meccanici
+
+### Rail 5 V motori
+
+- Buck separato ≥ 2,5 A di picco, rating ≥ 40 V, dietro load-switch
+- **Condensatore di bulk** dimensionato sul transitorio di stallo servo (il regolatore da 2,5 A regge solo con il bulk che assorbe il picco)
+- Acceptance [B]: transitorio di stallo servo singolo → nessun reset MCU, ripple su 3,3 V < 100 mV
+
+### Checklist di rilascio
+
+- [ ] STEP, DIR, EN, UART, DIAG su GPIO diretti (non expander)
+- [ ] Sense motori su ADC1
+- [ ] Shunt 33 mΩ in package 1206
+- [ ] Fondo scala INA180 ≤ 2,45 V a 2,5 A
+- [ ] Filtro INA180 compatibile con rilevazione battuta in 200 ms
+- [ ] INA180 e rail servo dietro load-switch
+- [ ] Bulk sul rail 5 V dimensionato sul transitorio di stallo
+- [ ] Limite ~100 mA/fase 28BYJ-48 documentato per firmware
+- [ ] Misura di stallo sui servo reali eseguita prima dell'ordine componenti di potenza`
+            });
+            console.log('Issue 5 created');
+
+      - name: Issue 6 — Interfacce e connettori
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[HW] Interfacce e connettori',
+              labels: ['feature'],
+              body: `## Requisiti tecnici — 06 Interfacce e connettori
+
+**Traceability:** REQ-IF-001, IF-002, IF-012, IF-013, IF-014, IF-015, MECH-003, DIAG-001, EL-004, SAFE-003, SW-003, SW-004
+
+---
+
+### Bus CAN
+
+**Transceiver: NXP TJA1042T/3** (candidato)
+
+| Requisito | Valore |
+|-----------|--------|
+| Standby con wake-up da bus | Sì |
+| VIO logica 3,3 V | 3–5 V |
+| ESD sui pin bus | ±8 kV IEC 61000-4-2 |
+| Tensione ammessa sui pin bus | −58…+58 V |
+| Immunità ISO 7637-2 | pulse 1, 2a, 3a |
+
+> La protezione CAN si ottiene per selezione del transceiver, non aggiungendo componenti. Se si adottasse un transceiver alternativo con spec inferiori, array di protezione esterno obbligatorio.
+
+- TX, RX, **STB** su GPIO diretti (STB necessario per wake-up da deep-sleep)
+- **Terminazione 120 Ω** inseribile via jumper o solder-bridge
+- Footprint per **choke di modo comune** (depopolato di default) + ponticelli di continuità
+- **Connettore:** morsettiera a vite 2,54 mm, sul bordo
+- **Bit-rate: 125 kbit/s** (tollerante a cablaggi lunghi; aggiornamento OTA ~5 min/1,5 MB)
+
+### Bus I²C
+
+- Un solo bus 3,3 V: I/O expander + connettore di espansione esterno
+- **Pull-up on-board disinseribili** (per non sommarsi ai pull-up di moduli esterni)
+- Protezione ESD sulle linee del connettore di espansione
+- **Connettore espansione: JST PH 2,0 mm, 4 pin**, ordine Qwiic-like (GND/VCC/SDA/SCL), pin 1 serigrafato
+- Acceptance [B]: comunicazione 100 kHz con dispositivo esterno su cavo 30 cm
+
+### I/O Expander
+
+**Non è un'opzione** — il bilancio GPIO non chiude senza di esso.
+
+- I²C 8 bit, **uscite push-pull** (non quasi-bidirezionale tipo PCF8574 — serve corrente sufficiente per i LED)
+- Indirizzo I²C selezionabile via strap e documentato
+- Corrente di riposo compatibile con budget deep-sleep (sempre sul rail always-on)
+- **Pull-down sugli enable dei load-switch** (expander non inizializzato → sezioni di potenza disalimentate)
+
+| Funzione assegnata | N° pin |
+|-------------------|--------|
+| LED CANopen RUN + ERR | 2 |
+| LED di stato generico | 1 |
+| Enable load-switch | 3 |
+| Riserva | 2 |
+
+> Sull'expander solo funzioni lente e non critiche nei tempi; PWM, STEP/DIR, CAN, power-hold, WAKEUP restano su GPIO diretti.
+
+### LED di stato
+
+**LED CANopen (CiA 303-3):**
+- **Verde RUN**: flicker ~10 Hz = LSS config; blink = Pre-op; singolo flash = Stopped; triplo flash = FW download; fisso = Operational
+- **Rosso ERR**: spento = OK; flicker = Node-ID non configurato; blink = cfg error; singolo flash = CAN warning; doppio = heartbeat error; triplo = SYNC timeout; quadruplo = PDO timeout; fisso = bus-off
+
+Logica implementata da CANopenNode; l'hardware riduce ai 2 LED.
+- **Spegnimento passivo** garantito dalla polarità di pilotaggio (no load-switch dedicato; no firmware attivo richiesto)
+
+### Test point
+
+Test point su: **3V3, 5V motori, CAN-H, CAN-L, WAKEUP**; portare su pad anche i GPIO liberi.
+
+### Riepilogo connettori
+
+| Connettore | Tipo | Posizione |
+|------------|------|-----------|
+| Alimentazione board | Morsettiera vite 5,08 mm, 2 poli | Bordo |
+| 4 uscite di potenza | Morsettiera vite 5,08 mm | Bordo |
+| Bus CAN | Morsettiera vite 2,54 mm | Bordo |
+| 5 ingressi | Morsettiera vite 2,54 mm | Bordo |
+| 5 ingressi (parallelo) | JST XH 2,5 mm | Anche interno |
+| Bus I²C | JST PH 2,0 mm, 4 poli | Anche interno |
+| Stepper | 4 poli | Anche interno |
+| 2 servo | 3 poli standard servo | Anche interno |
+
+**Regola:** tutte le morsettiere a vite sul bordo; connettori a innesto ammessi anche internamente.
+
+### Checklist di rilascio
+
+- [ ] Transceiver CAN: ESD ≥ ±8 kV, guasto ≥ ±40 V, immunità ISO 7637-2 verificati
+- [ ] STB transceiver collegato a GPIO (non fissato)
+- [ ] Terminazione 120 Ω inseribile
+- [ ] Ponticelli di continuità sul footprint choke CAN
+- [ ] Pull-up I²C disinseribili
+- [ ] Indirizzo expander selezionabile via strap e documentato
+- [ ] Pull-down sugli enable load-switch comandati dall'expander
+- [ ] LED spenti con pin a riposo (polarità di pilotaggio)
+- [ ] Pin 1 del connettore I²C serigrafato
+- [ ] Test point su 3V3, 5V motori, CAN-H/L, WAKEUP
+- [ ] Morsettiere a vite tutte sul bordo`
+            });
+            console.log('Issue 6 created');
