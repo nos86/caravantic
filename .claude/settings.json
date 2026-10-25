@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(py sim/run.py:*)",
+      "PowerShell(py sim/run.py:*)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
