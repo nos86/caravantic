@@ -1,0 +1,4 @@
+* Modelli generici per la sim A5 (NON dei costruttori)
+* Diodo piccolo segnale tipo 1N4148 (parametri SPICE standard), usato per i due diodi del BAV199 e per gli ESD interni dell'ADS1115.
+* La perdita inversa NON e' nel modello: si inietta con sorgenti di corrente esplicite (5 nA garantiti a 75 V / 25 C, Diodes DS30232).
+.model DGEN D(IS=2.52n RS=0.568 N=1.752 CJO=4p M=0.4 TT=20n BV=100 IBV=100u)
