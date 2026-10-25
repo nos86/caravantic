@@ -1,0 +1,190 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 640" font-family="Segoe UI, Arial, sans-serif" font-size="12">
+  <style>
+    .bg { fill: #ffffff; }
+    .w { stroke: #1f2933; stroke-width: 1.6; fill: none; }
+    .wt { stroke: #8a94a0; stroke-width: 7; fill: none; stroke-linecap: round; }
+    .k { stroke: #1f6fb2; stroke-width: 1.6; fill: none; }
+    .c { fill: #ffffff; stroke: #1f2933; stroke-width: 1.6; }
+    .d { fill: #1f2933; stroke: #1f2933; stroke-width: 1.2; }
+    .dot { fill: #1f2933; }
+    .t { fill: #1f2933; }
+    .ts { fill: #52606d; font-size: 11px; }
+    .tb { fill: #1f2933; font-weight: 600; }
+    .net { fill: #1f6fb2; font-weight: 600; }
+    .rail { fill: #b42318; font-weight: 600; }
+    .box { fill: #f2f6fa; stroke: #1f2933; stroke-width: 1.6; }
+    .zone { fill: #fbfcfd; stroke: #c3cdd6; stroke-width: 1; stroke-dasharray: 5 4; }
+    .leg { fill: #f7f9fb; stroke: #c3cdd6; stroke-width: 1; }
+  </style>
+  <rect class="bg" width="1120" height="640"/>
+
+  <text x="24" y="28" class="tb" font-size="16">A5 — Un canale di misura shunt (il canale 2 è identico)</text>
+  <text x="24" y="47" class="ts">Shunt 200 A / 75 mV sul negativo  →  rete di ingresso  →  ADC ADS1115 (differenziale, bipolare)</text>
+
+  <!-- zone -->
+  <rect class="zone" x="140" y="62" width="520" height="376" rx="8"/>
+  <text x="540" y="398" class="tb">Rete di ingresso</text>
+  <text x="540" y="413" class="ts">filtro, protezione,</text>
+  <text x="540" y="427" class="ts">spostamento del modo comune</text>
+
+  <!-- ================= SHUNT ================= -->
+  <line class="wt" x1="80" y1="150" x2="80" y2="104"/>
+  <line class="wt" x1="80" y1="330" x2="80" y2="376"/>
+  <line class="w" x1="80" y1="150" x2="80" y2="190"/>
+  <rect class="c" x="64" y="190" width="32" height="100"/>
+  <line class="w" x1="80" y1="290" x2="80" y2="330"/>
+  <circle class="dot" cx="80" cy="150" r="3.5"/>
+  <circle class="dot" cx="80" cy="330" r="3.5"/>
+  <text x="94" y="96" class="ts">verso i carichi</text>
+  <text x="94" y="384" class="ts">verso il − batteria</text>
+  <text x="108" y="233" class="tb">SHUNT</text>
+  <text x="108" y="249" class="ts">200 A / 75 mV</text>
+  <text x="108" y="264" class="ts">(0,375 mΩ)</text>
+  <text x="24" y="145" class="ts" text-anchor="start">LOAD</text>
+  <text x="24" y="165" class="ts">±75 mV</text>
+  <text x="24" y="316" class="ts">BAT</text>
+  <!-- massa board -->
+  <line class="w" x1="80" y1="330" x2="40" y2="330"/>
+  <line class="w" x1="40" y1="330" x2="40" y2="352"/>
+  <line class="w" x1="28" y1="352" x2="52" y2="352"/>
+  <line class="w" x1="32" y1="358" x2="48" y2="358"/>
+  <line class="w" x1="36" y1="364" x2="44" y2="364"/>
+  <text x="24" y="394" class="rail">GND board</text>
+  <text x="24" y="409" class="ts">un solo punto</text>
+
+  <!-- ================= RIGA P (AINP) y=150 ================= -->
+  <path class="k" d="M80 150 H170"/>
+  <rect class="c" x="170" y="140" width="60" height="20"/>
+  <path class="k" d="M230 150 H700"/>
+  <text x="200" y="134" class="tb" text-anchor="middle">R_S</text>
+  <text x="200" y="182" class="ts" text-anchor="middle">10 kΩ</text>
+  <text x="125" y="128" class="ts" text-anchor="middle">Kelvin</text>
+
+  <circle class="dot" cx="330" cy="150" r="3.5"/>
+  <circle class="dot" cx="410" cy="150" r="3.5"/>
+  <circle class="dot" cx="490" cy="150" r="3.5"/>
+  <circle class="dot" cx="580" cy="150" r="3.5"/>
+
+  <!-- R_B P -->
+  <line class="w" x1="330" y1="150" x2="330" y2="125"/>
+  <rect class="c" x="322" y="85" width="16" height="40"/>
+  <line class="w" x1="330" y1="85" x2="330" y2="68"/>
+  <line class="w" x1="318" y1="68" x2="342" y2="68"/>
+  <text x="330" y="60" class="rail" text-anchor="middle">+3V3</text>
+  <text x="346" y="103" class="tb">R_B</text>
+  <text x="346" y="118" class="ts">150 kΩ</text>
+
+  <!-- C_CM P -->
+  <line class="w" x1="410" y1="150" x2="410" y2="176"/>
+  <line class="w" x1="398" y1="176" x2="422" y2="176"/>
+  <line class="w" x1="398" y1="184" x2="422" y2="184"/>
+  <line class="w" x1="410" y1="184" x2="410" y2="215"/>
+  <line class="w" x1="398" y1="215" x2="422" y2="215"/>
+  <text x="410" y="229" class="rail" text-anchor="middle">GND</text>
+  <text x="428" y="177" class="tb">C_CM</text>
+  <text x="428" y="192" class="ts">3,3 nF C0G</text>
+
+  <!-- BAV199 P -->
+  <line class="w" x1="490" y1="150" x2="490" y2="120"/>
+  <polygon class="d" points="482,120 498,120 490,103"/>
+  <line class="w" x1="482" y1="101" x2="498" y2="101"/>
+  <line class="w" x1="490" y1="101" x2="490" y2="68"/>
+  <line class="w" x1="478" y1="68" x2="502" y2="68"/>
+  <text x="490" y="60" class="rail" text-anchor="middle">+3V3</text>
+  <line class="w" x1="490" y1="150" x2="490" y2="176"/>
+  <line class="w" x1="482" y1="177" x2="498" y2="177"/>
+  <polygon class="d" points="482,196 498,196 490,179"/>
+  <line class="w" x1="490" y1="196" x2="490" y2="215"/>
+  <line class="w" x1="478" y1="215" x2="502" y2="215"/>
+  <text x="490" y="229" class="rail" text-anchor="middle">GND</text>
+  <text x="506" y="118" class="tb">D_CL</text>
+  <text x="506" y="133" class="ts">BAV199</text>
+
+  <!-- C_DIFF -->
+  <line class="w" x1="580" y1="150" x2="580" y2="236"/>
+  <line class="w" x1="568" y1="236" x2="592" y2="236"/>
+  <line class="w" x1="568" y1="244" x2="592" y2="244"/>
+  <line class="w" x1="580" y1="244" x2="580" y2="330"/>
+  <text x="598" y="236" class="tb">C_DIFF</text>
+  <text x="598" y="251" class="ts">33 nF</text>
+
+  <!-- ================= RIGA N (AINN) y=330 ================= -->
+  <path class="k" d="M80 330 H170"/>
+  <rect class="c" x="170" y="320" width="60" height="20"/>
+  <path class="k" d="M230 330 H700"/>
+  <text x="200" y="314" class="tb" text-anchor="middle">R_S</text>
+  <text x="200" y="362" class="ts" text-anchor="middle">10 kΩ</text>
+
+  <circle class="dot" cx="330" cy="330" r="3.5"/>
+  <circle class="dot" cx="410" cy="330" r="3.5"/>
+  <circle class="dot" cx="490" cy="330" r="3.5"/>
+  <circle class="dot" cx="580" cy="330" r="3.5"/>
+
+  <!-- R_B N -->
+  <line class="w" x1="330" y1="330" x2="330" y2="355"/>
+  <rect class="c" x="322" y="355" width="16" height="40"/>
+  <line class="w" x1="330" y1="395" x2="330" y2="412"/>
+  <line class="w" x1="318" y1="412" x2="342" y2="412"/>
+  <text x="330" y="428" class="rail" text-anchor="middle">+3V3</text>
+  <text x="346" y="373" class="tb">R_B</text>
+  <text x="346" y="388" class="ts">150 kΩ</text>
+
+  <!-- C_CM N -->
+  <line class="w" x1="410" y1="330" x2="410" y2="304"/>
+  <line class="w" x1="398" y1="304" x2="422" y2="304"/>
+  <line class="w" x1="398" y1="296" x2="422" y2="296"/>
+  <line class="w" x1="410" y1="296" x2="410" y2="272"/>
+  <line class="w" x1="398" y1="272" x2="422" y2="272"/>
+  <text x="410" y="264" class="rail" text-anchor="middle">GND</text>
+  <text x="428" y="300" class="tb">C_CM</text>
+  <text x="428" y="315" class="ts">3,3 nF C0G</text>
+
+  <!-- BAV199 N -->
+  <line class="w" x1="490" y1="272" x2="490" y2="284"/>
+  <line class="w" x1="478" y1="272" x2="502" y2="272"/>
+  <polygon class="d" points="482,284 498,284 490,301"/>
+  <line class="w" x1="482" y1="303" x2="498" y2="303"/>
+  <line class="w" x1="490" y1="303" x2="490" y2="330"/>
+  <text x="490" y="264" class="rail" text-anchor="middle">GND</text>
+  <line class="w" x1="490" y1="330" x2="490" y2="352"/>
+  <polygon class="d" points="482,352 498,352 490,369"/>
+  <line class="w" x1="482" y1="371" x2="498" y2="371"/>
+  <line class="w" x1="490" y1="371" x2="490" y2="412"/>
+  <line class="w" x1="478" y1="412" x2="502" y2="412"/>
+  <text x="490" y="428" class="rail" text-anchor="middle">+3V3</text>
+  <text x="506" y="345" class="tb">D_CL</text>
+  <text x="506" y="360" class="ts">BAV199</text>
+
+  <!-- ================= ADS1115 ================= -->
+  <rect class="box" x="700" y="104" width="230" height="290" rx="6"/>
+  <text x="815" y="128" class="tb" text-anchor="middle" font-size="14">U_SH · ADS1115</text>
+  <text x="815" y="145" class="ts" text-anchor="middle">ADC 16 bit, I²C</text>
+  <text x="712" y="154" class="net">AIN0 (AINP)</text>
+  <text x="712" y="334" class="net">AIN1 (AINN)</text>
+  <text x="815" y="200" class="t" text-anchor="middle">PGA ±0,256 V</text>
+  <text x="815" y="218" class="ts" text-anchor="middle">1 LSB = 7,8 µV</text>
+  <text x="815" y="236" class="ts" text-anchor="middle">= 0,0228 A/LSB</text>
+  <text x="815" y="262" class="ts" text-anchor="middle">Z diff. 710 kΩ (tipica)</text>
+  <text x="815" y="282" class="ts" text-anchor="middle">VDD +3V3 · ADDR → GND (0x48)</text>
+  <text x="815" y="300" class="ts" text-anchor="middle">ALERT/RDY non collegato</text>
+  <line class="w" x1="930" y1="240" x2="975" y2="240"/>
+  <text x="982" y="236" class="tb">I²C</text>
+  <text x="982" y="251" class="ts">SDA / SCL</text>
+  <text x="982" y="266" class="ts">→ ESP32-S3</text>
+
+  <!-- ================= ANNOTAZIONI ================= -->
+  <text x="610" y="136" class="net">AINP</text>
+  <text x="610" y="320" class="net">AINN</text>
+  <text x="745" y="458" class="ts" text-anchor="middle"></text>
+
+  <!-- LEGENDA -->
+  <rect class="leg" x="24" y="452" width="1072" height="170" rx="6"/>
+  <text x="40" y="474" class="tb">Cosa fa ogni parte</text>
+  <text x="40" y="496" class="t"><tspan class="tb">R_S 10 kΩ</tspan> — limita la corrente di guasto (2 mA a ±24 V) e, con C_DIFF, forma il filtro.</text>
+  <text x="40" y="516" class="t"><tspan class="tb">R_B 150 kΩ</tspan> — alza entrambi gli ingressi di ≈ +0,2 V: l'ADS1115 garantisce solo tensioni ≥ GND, e il capo LOAD scende fino a −75 mV.</text>
+  <text x="40" y="536" class="t"><tspan class="tb">C_DIFF 33 nF</tspan> — filtro differenziale, taglio ≈ 280 Hz.   <tspan class="tb">C_CM 3,3 nF</tspan> — filtro di modo comune (C_DIFF ≥ 10 · C_CM).</text>
+  <text x="40" y="556" class="t"><tspan class="tb">D_CL BAV199</tspan> — doppio diodo: porta verso +3V3 e verso GND le sovratensioni (pin 3 al nodo, pin 1 a GND, pin 2 a +3V3).</text>
+  <text x="40" y="576" class="t"><tspan style="fill:#1f6fb2;font-weight:600">Blu</tspan> — filo Kelvin (coppia twistata, due fili per shunt).  <tspan style="fill:#8a94a0;font-weight:600">Grigio spesso</tspan> — corrente di carico fino a ±200 A.</text>
+  <text x="40" y="596" class="t"><tspan class="tb">Cablaggio</tspan> — la massa della board va al capo BAT dello shunt in un solo punto (offset ≤ ±50 mV).</text>
+  <text x="40" y="613" class="ts">Canale 2: AIN2 / AIN3, stessi valori. Valori e numeri in a5_shunt_energia.md. Rev. 2026-10-18.</text>
+</svg>
