@@ -1,0 +1,207 @@
+  [  0.0s] dc VSRC -20 30 0.02 T=-10
+  [  0.0s] dc VSRC -20 30 0.02 T=25
+  [  0.0s] dc VSRC -20 30 0.02 T=60
+  [  0.1s] tran 2u 41m T=-10
+  [  0.1s] tran 2u 41m T=-10
+  [  0.1s] tran 2u 41m T=-10
+  [  0.1s] tran 2u 41m T=25
+  [  0.1s] tran 2u 41m T=25
+  [  0.1s] tran 2u 41m T=25
+  [  0.1s] tran 2u 41m T=60
+  [  0.1s] tran 2u 41m T=60
+  [  0.1s] tran 2u 41m T=60
+  [  0.1s] tran 20u 600m T=60
+  [  0.1s] tran 0.2u 3m T=60
+  [  0.0s] tran 0.05u 200u T=60
+  [  0.1s] tran 0.5n 12u T=60
+  [  0.1s] tran 0.5n 12u T=60
+  [  0.1s] tran 10u 60m T=60
+  [  0.1s] tran 10u 60m T=60
+{
+ "dc_ON_worst": {
+  "Vin_attivo_garantito": 6.42,
+  "Vin_max_inattivo": 4.36,
+  "I_in_mA_at": {
+   "-16": -1.869,
+   "0": 0.0,
+   "2": 0.006,
+   "8": 0.502,
+   "10": 0.734,
+   "11.5": 0.91,
+   "12.8": 1.064,
+   "14.4": 1.253,
+   "16": 1.444,
+   "24": 2.401,
+   "30": 3.121
+  }
+ },
+ "dc_tipico": {
+  "Vin_attivo_garantito": 3.3,
+  "Vin_max_inattivo": 2.64,
+  "I_in_mA_at": {
+   "-16": -1.877,
+   "0": 0.0,
+   "2": 0.006,
+   "8": 0.536,
+   "10": 0.767,
+   "11.5": 0.943,
+   "12.8": 1.096,
+   "14.4": 1.285,
+   "16": 1.475,
+   "24": 2.431,
+   "30": 3.151
+  }
+ },
+ "dc_OFF_worst": {
+  "Vin_attivo_garantito": 2.52,
+  "Vin_max_inattivo": 1.84,
+  "I_in_mA_at": {
+   "-16": -1.885,
+   "0": 0.0,
+   "2": 0.009,
+   "8": 0.57,
+   "10": 0.801,
+   "11.5": 0.976,
+   "12.8": 1.129,
+   "14.4": 1.318,
+   "16": 1.507,
+   "24": 2.461,
+   "30": 3.18
+  }
+ },
+ "gradino_ON_worst": {
+  "Vin=8": {
+   "t_attivo_us": 25.0,
+   "t_inattivo_us": 28.9,
+   "Vout_a_regime": 0.465
+  },
+  "Vin=11.5": {
+   "t_attivo_us": 11.8,
+   "t_inattivo_us": 29.8,
+   "Vout_a_regime": 0.438
+  },
+  "Vin=14.4": {
+   "t_attivo_us": 8.1,
+   "t_inattivo_us": 28.1,
+   "Vout_a_regime": 0.429
+  }
+ },
+ "gradino_tipico": {
+  "Vin=8": {
+   "t_attivo_us": 7.2,
+   "t_inattivo_us": 74.7,
+   "Vout_a_regime": 0.172
+  },
+  "Vin=11.5": {
+   "t_attivo_us": 4.3,
+   "t_inattivo_us": 75.8,
+   "Vout_a_regime": 0.157
+  },
+  "Vin=14.4": {
+   "t_attivo_us": 3.2,
+   "t_inattivo_us": 75.3,
+   "Vout_a_regime": 0.15
+  }
+ },
+ "gradino_OFF_worst": {
+  "Vin=8": {
+   "t_attivo_us": 5.8,
+   "t_inattivo_us": 148.3,
+   "Vout_a_regime": 0.179
+  },
+  "Vin=11.5": {
+   "t_attivo_us": 4.2,
+   "t_inattivo_us": 148.8,
+   "Vout_a_regime": 0.164
+  },
+  "Vin=14.4": {
+   "t_attivo_us": 3.2,
+   "t_inattivo_us": 149.0,
+   "Vout_a_regime": 0.156
+  }
+ },
+ "iso_loaddump": {
+  "Vin_picco": 101.0,
+  "Vr_D1_max": 0.0,
+  "V_nodo_min_max": [
+   3.57,
+   4.64
+  ],
+  "V_LED_inversa_max": -0.93,
+  "I_LED_max_mA": 11.75,
+  "P_RS_picco_W": 1.132,
+  "E_RS_mJ": 174.087
+ },
+ "iso_pulse1": {
+  "Vin_picco": 149.8,
+  "Vr_D1_max": 0.0,
+  "V_nodo_min_max": [
+   -0.66,
+   -0.0
+  ],
+  "V_LED_inversa_max": 0.43,
+  "I_LED_max_mA": 0.0,
+  "P_RS_picco_W": 2.713,
+  "E_RS_mJ": 1.803
+ },
+ "iso_pulse2a": {
+  "Vin_picco": 125.5,
+  "Vr_D1_max": 0.0,
+  "V_nodo_min_max": [
+   3.57,
+   4.83
+  ],
+  "V_LED_inversa_max": -0.93,
+  "I_LED_max_mA": 14.71,
+  "P_RS_picco_W": 1.775,
+  "E_RS_mJ": 0.035
+ },
+ "iso_pulse3a": {
+  "Vin_picco": 205.2,
+  "Vr_D1_max": 0.0,
+  "V_nodo_min_max": [
+   -0.66,
+   3.56
+  ],
+  "V_LED_inversa_max": 0.67,
+  "I_LED_max_mA": 1.52,
+  "P_RS_picco_W": 5.16,
+  "E_RS_mJ": 0.0
+ },
+ "iso_pulse3b": {
+  "Vin_picco": 162.5,
+  "Vr_D1_max": 0.0,
+  "V_nodo_min_max": [
+   3.56,
+   5.05
+  ],
+  "V_LED_inversa_max": -0.92,
+  "I_LED_max_mA": 19.11,
+  "P_RS_picco_W": 3.034,
+  "E_RS_mJ": 0.0
+ },
+ "iso_fault_+24V": {
+  "Vin_picco": 24.0,
+  "Vr_D1_max": 0.0,
+  "V_nodo_min_max": [
+   3.82,
+   3.82
+  ],
+  "V_LED_inversa_max": -0.96,
+  "I_LED_max_mA": 2.46,
+  "P_RS_picco_W": 0.05,
+  "E_RS_mJ": 2.98
+ },
+ "iso_fault_-16V": {
+  "Vin_picco": 16.0,
+  "Vr_D1_max": 0.0,
+  "V_nodo_min_max": [
+   -0.54,
+   -0.54
+  ],
+  "V_LED_inversa_max": 0.2,
+  "I_LED_max_mA": -0.0,
+  "P_RS_picco_W": 0.029,
+  "E_RS_mJ": 1.748
+ }
+}
