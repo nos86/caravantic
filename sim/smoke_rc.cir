@@ -1,0 +1,9 @@
+* smoke_rc — verifica della toolchain (nessun REQ): RC 1k / 1u, tau = 1 ms
+* Atteso: v(out) a 1 ms = 1 - e^-1 = 0.632 V
+V1 in 0 PULSE(0 1 0 1n 1n 10m 20m)
+R1 in out 1k
+C1 out 0 1u
+.tran 10u 5m
+.meas tran v_tau FIND v(out) AT=1m
+.meas tran t63 WHEN v(out)=0.632 RISE=1
+.end
