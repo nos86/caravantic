@@ -1,0 +1,36 @@
+{
+ "EQ47": {
+  "re1": 47,
+  "re2": 47,
+  "rref": 243.5,
+  "i0_mA": 7.999,
+  "dT_-10": -2.38,
+  "dT_60": 2.37,
+  "dV_-3%": -4.22,
+  "dV_+3%": 4.23,
+  "I_Rs0_cold_low": 7.493,
+  "I_Rs190_cold_low": 7.45,
+  "I_Rs209_cold_low": 7.445,
+  "I_Rs190_hot_hi": 8.498,
+  "Vopen_cold_low": 2.709,
+  "Vopen_hot_hi": 3.109,
+  "I_gpio_mA": 8.071
+ },
+ "RATIO": {
+  "re1": 376,
+  "re2": 47,
+  "rref": 1651.9,
+  "i0_mA": 8.0,
+  "dT_-10": -2.05,
+  "dT_60": 1.92,
+  "dV_-3%": -4.62,
+  "dV_+3%": 4.62,
+  "I_Rs0_cold_low": 7.5,
+  "I_Rs190_cold_low": 7.436,
+  "I_Rs209_cold_low": 7.43,
+  "I_Rs190_hot_hi": 8.486,
+  "Vopen_cold_low": 2.822,
+  "Vopen_hot_hi": 3.233,
+  "I_gpio_mA": 1.19
+ }
+}

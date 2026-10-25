@@ -1,0 +1,5 @@
+* Modelli per A4 (livello serbatoio chiare). NON sono modelli del costruttore.
+* D4148: ricavato per la sim A1 (1N4148WS).  QP3906: parametri SPICE generici 2N3906 (da memoria,
+* non letti da un modello ufficiale): usare solo per confronti fra topologie, non per i valori assoluti.
+.model D4148 D(IS=2.5e-9 N=1.75 RS=0.6 BV=75 IBV=1u CJO=2p TT=4n EG=1.11 XTI=3)
+.model QP3906 PNP(IS=1.41f XTI=3 EG=1.11 VAF=18.7 BF=180.7 NE=1.5 ISE=0 IKF=80m XTB=1.5 BR=4.977 NC=2 ISC=0 IKR=0 RC=2.5 CJC=9.728p MJC=.5776 VJC=.75 FC=.5 CJE=8.063p MJE=.3677 VJE=.75 TR=33.42n TF=179.3p ITF=.4 VTF=4 XTF=6 RB=10)
