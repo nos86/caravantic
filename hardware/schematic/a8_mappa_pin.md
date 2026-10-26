@@ -1,6 +1,6 @@
 # A8 — Mappa pin: GPIO nativi ed expander I²C
 
-> **SUPERATA il 2026-10-26** (REQ-SW-001: due schede con ESP32-C6-Zero, IF-012 Ethernet rimosso). La mappa descrive un unico ESP32-S3-Tiny + expander MCP23017 e va rifatta per ciascuna scheda (OPEN-17). Conservata come riferimento.
+> **SUPERATA il 2026-10-26** (REQ-SW-001: due schede con ESP32-C6-Zero, IF-012 Ethernet rimosso). Sostituita da [`a8_esp32_c6_zero_pinout.md`](a8_esp32_c6_zero_pinout.md) (modulo) e dalle mappe di scheda `idraulica/schematic/a8_mappa_pin.md` ed `elettrica/schematic/a8_mappa_pin.md` (senza expander). Conservata come riferimento: i nomi di rete e l'analisi del bus I²C (§2.4) restano utili.
 
 Requisiti: REQ-IF-012 (Ethernet, strategia pin), REQ-SW-001, REQ-SW-002, OPEN-16. Stato di tutto ciò che segue: **Proposto / Assumed**. Nessun componente scelto (famiglia di expander da decidere).
 
