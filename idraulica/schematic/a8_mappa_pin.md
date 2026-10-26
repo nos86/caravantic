@@ -26,35 +26,40 @@ Con due schede ogni scheda ha **meno segnali** di quella unica: la ripartizione 
 
 Nomi dalla netlist EasyEDA del 2026-10-23 (vedi la vecchia a8 §2.5).
 
-## 3. Assegnazione proposta
+## 3. Assegnazione proposta (rev. 2026-10-26, dopo la lettura del datasheet)
+
+Regola (vedi [pinout §4](../../hardware/schematic/a8_esp32_c6_zero_pinout.md)): le uscite che devono restare spente al reset stanno sui **9 pin sicuri** (GP0, 1, 2, 3, 4, 5, 7, 14, 15: nessun pull al reset). GP6, GP16…GP23 hanno un weak pull-up (≈ 45 kΩ tipico), GP18…GP23 già durante il reset.
 
 | GPIO | Lato | Funzione | Note |
 |---|---|---|---|
-| GP0 | sinistro | `DO1` | |
-| GP1 | sinistro | `DO2` | |
-| GP2 | sinistro | `DO3` | |
-| GP3 | sinistro | `DO4` | |
-| GP4, GP5 | sinistro | **liberi, solo ingresso** | strapping |
-| GP6 | retro | `OUT_LINEAR_MOTOR_ENA` | pull-down passivo sul gate |
-| GP7 | retro | `OUT_LINEAR_MOTOR_DIR` | pull-down passivo |
-| GP14 | destro | `OW` | |
-| GP15 | destro | `SIG_AUX2` | **strapping: provvisorio.** Da verificare il livello di default sul datasheet; alternativa GP4 o GP5 |
-| GP16 (TX) | destro | GPS TX | logger su USB-Serial-JTAG |
+| GP0 | sinistro | `DO1` | sicuro |
+| GP1 | sinistro | `DO2` | sicuro |
+| GP2 | sinistro | `DO3` | sicuro |
+| GP3 | sinistro | `DO4` | sicuro |
+| GP4 | sinistro | `OUT_VALVE_OPEN` | sicuro (MTMS: strapping solo SDIO, nessun effetto); interblocco hardware con CLOSE (EL-003) |
+| GP5 | sinistro | `OUT_VALVE_CLOSE` | sicuro (MTDI, idem) |
+| GP7 | retro | `OUT_LINEAR_MOTOR_DIR` | sicuro; pull-down passivo sul gate |
+| GP14 | destro | `OUT_LINEAR_MOTOR_ENA` | sicuro; pull-down passivo sul gate |
+| GP15 | destro | **libero, pin sicuro di scorta** | strapping JTAG ignorato con eFuse di fabbrica |
+| GP6 | retro | libero (weak pull-up) | MTCK |
+| GP16 (TX) | destro | GPS TX | uscita alta dopo il reset (idle UART); la ROM stampa i log di boot qui |
 | GP17 (RX) | destro | GPS RX | |
-| GP18 | destro | `CLEAN_TANK_CMD` | |
-| GP19 | destro | `WASTE_TANK_CMD` | |
-| GP20 | destro | `OUT_VALVE_OPEN` | interblocco hardware con CLOSE (EL-003) |
-| GP21 | destro | `OUT_VALVE_CLOSE` | |
-| GP22 | destro | SDA | pull-up 2,2 kΩ (vedi vecchia a8 §2.4), 100 kHz iniziali |
-| GP23 | retro | SCL | |
+| GP18 | destro | SDA | pull-up 2,2 kΩ esterno (vedi vecchia a8 §2.4), 100 kHz iniziali |
+| GP19 | destro | SCL | |
+| GP20 | destro | `OW` (1-Wire) | pull-up esterno |
+| GP21 | destro | `CLEAN_TANK_CMD` (= `LVL_EN`) | **su pin con weak pull-up**: durante il boot l'eccitazione del livello può essere accesa; accettabile (misura, 4–10 mA, poche centinaia di ms) oppure pull-down ≤ 4,7 kΩ; da verificare sul foglio a4 la polarità del pilota |
+| GP22 | destro | `WASTE_TANK_CMD` (= `GRY_DRV`) | idem, foglio a3 (eccitazione continua della sonda per qualche centinaio di ms al boot: corrosione trascurabile, da confermare) |
+| GP23 | retro | `SIG_AUX2` | ingresso opto con pull-up a 3V3: il weak pull-up è innocuo |
 | GP8, GP9, GP12, GP13 | — | non usati | LED, BOOT, USB |
 
-**Bilancio:** 16 usati su 18 (15 puliti + 3 solo-ingresso): 15 puliti tutti occupati, `SIG_AUX2` su un pin di strappo. **Margine: GP4 e GP5 (solo ingresso).** Nessun margine sulle uscite: ogni segnale in più richiede di unire due relè su un pilota, o un expander I²C reintrodotto solo per le uscite.
+**Bilancio:** 16 segnali su 18 pin disponibili. **10 uscite**: 9 sui pin sicuri più 2 (`CLEAN_TANK_CMD`, `WASTE_TANK_CMD`) sui pin con weak pull-up, scelte perché un'accensione al boot è innocua; **valvola, pistone e i 4 relè sono tutti su pin sicuri**. Margine: **GP15** (sicuro) e **GP6**.
 
 ## 4. Aperti
 
-- Livelli di default di GP4/GP5/GP15 al boot (datasheet Espressif, non letto) e se un pull-up opto su GP15 è compatibile.
-- I²C: il bus è unico ma con meno slave (4 dispositivi: LSM6DSOX 0x6A, MMC5983MA 0x30, INA219 0x40, ADS1115 0x49): verificare che gli indirizzi restino liberi dopo aver tolto U_SH (che passa all'elettrica con il suo 0x48).
+- Polarità e rete di pull-down dei piloti `CLEAN_TANK_CMD` e `WASTE_TANK_CMD` (fogli a4 e a3): accettare l'accensione al boot o aggiungere pull-down ≤ 4,7 kΩ.
+- Eventuale pull-up/pull-down sulla scheda Waveshare sui pin esposti: schema non letto, misurare sul modulo reale.
+- Verifica delle eFuse di fabbrica (`espefuse summary`): GP15 libero solo se EFUSE_JTAG_SEL_ENABLE = 0.
+- I²C: bus unico con 4 dispositivi (LSM6DSOX 0x6A, MMC5983MA 0x30, INA219 0x40, ADS1115 0x49), indirizzi liberi dopo lo spostamento di U_SH (0x48) sull'elettrica.
 - Il magnetometro e il suo cavo vanno lontano dai relè `DO1…4` e dal motore: vincoli di layout in a7.
-- Il LED di bordo WS2812 su GP8 resta inutilizzato (o indicatore di stato, a scelta).
-- Uscite al reset: il C6 porta i GPIO in ingresso a alta impedenza; i pull-down passivi sui gate sono obbligatori (REQ-SW-002).
+- Il LED WS2812 su GP8 resta inutilizzato.
+- Uscite al reset: i pull-down passivi sui gate sono comunque obbligatori (REQ-SW-002).

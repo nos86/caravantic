@@ -1,19 +1,18 @@
 # A8 — ESP32-C6-Zero: pin disponibili (comune alle due schede)
 
-Requisiti: REQ-SW-001 (un ESP32-C6-Zero per scheda), REQ-SW-002. Stato: **Proposto / Assumed**. Sostituisce, per il modulo, la sezione 1 della vecchia [`a8_mappa_pin.md`](a8_mappa_pin.md) (ESP32-S3-Tiny, superata).
+Requisiti: REQ-SW-001 (un ESP32-C6-Zero per scheda), REQ-SW-002. Stato: **Proposto / Assumed**, rev. 2026-10-26 (strapping e stato al reset chiusi sul datasheet). Sostituisce, per il modulo, la sezione 1 della vecchia [`a8_mappa_pin.md`](a8_mappa_pin.md) (ESP32-S3-Tiny, superata).
 
 ## 1. Fonti e cosa è verificato
 
 | Dato | Fonte | Peso |
 |---|---|---|
-| Pinout delle 22 GPIO: immagine [ESP32-C6-Zero_Pin.png](https://www.waveshare.com/w/upload/2/2e/ESP32-C6-Zero_Pin.png), **letta direttamente il 2026-10-26** | costruttore (Waveshare) | primaria |
-| GPIO12/13 usate dall'USB-JTAG; GPIO24…30 = flash SPI; GPIO0…7 = LP_GPIO0…7 | [ESP-IDF, GPIO & RTC GPIO, ESP32-C6](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c6/api-reference/peripherals/gpio.html) | primaria |
-| GPIO4, 5, 8, 9 strapping (GPIO15 citato da un forum Arduino come ulteriore strapping) | stessa pagina ESP-IDF (4, 5, 8, 9); [forum Arduino](https://forum.arduino.cc/t/esp32-c6-usable-gpios/1350380) per il 15 | primaria / **debole** per GPIO15 |
-| GPIO9 alto = boot da flash, GPIO9 basso + GPIO8 alto = download | [RIOT-OS](https://doc.riot-os.org/group__cpu__esp32__esp32c6.html) | secondaria |
+| Pinout delle 22 GPIO: immagine [ESP32-C6-Zero_Pin.png](https://www.waveshare.com/w/upload/2/2e/ESP32-C6-Zero_Pin.png), letta il 2026-10-26 | Waveshare | primaria |
+| Strapping, stato dei pin al reset, R_PU, mappa SDIO, UART, ADC: **datasheet ESP32-C6 Series v1.5** (`documentation.espressif.com/esp32-c6_datasheet_en.pdf`), testo estratto con `pdftotext`: §3 Boot Configurations (Tab. 3-1…3-7), §2.2 Pin Overview (Tab. 2-1/2-2 e note 4–6), §2.3.4/2.3.5 restrizioni dei GPIO, tab. DC (R_PU) | costruttore (Espressif) |
+| GPIO12/13 usati dall'USB-JTAG; GPIO24…30 flash SPI | [ESP-IDF, GPIO & RTC GPIO](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c6/api-reference/peripherals/gpio.html) e datasheet §2.3.4 | primaria |
 
-**Non letti:** la tabella degli strapping del datasheet Espressif (livelli di default e significato di GPIO4/5/15), lo schema Waveshare `ESP32-C6-Zero-Sch.pdf` (scaricato, ma `pdftoppm` non è installato: non renderizzabile qui), il numero di UART e i canali ADC dal datasheet.
+**Limiti di lettura:** le tabelle dei pin del datasheet si estraggono con le colonne "At Reset / After Reset" spostate; ho usato l'estrazione `-table` (righe coerenti fra QFN32 e QFN40) e il testo delle note. Le righe di GPIO0/GPIO1 e GPIO14 sono incomplete nell'estrazione (valore dato per **non pull** al reset, non verificato su immagine della pagina). Lo schema Waveshare (`ESP32-C6-Zero-Sch.pdf`) **non è stato letto**: eventuali pull o resistori sulla scheda non sono noti. Il datasheet non dà R_PU min/max: solo tipico **45 kΩ**.
 
-**Discrepanza da risolvere:** la wiki Waveshare dice ESP32-C6**FH4**, 4 MB di flash; la pagina prodotto dice ESP32-C6**FH8**, 8 MB. REQ-SW-001 riportava FH8/8 MB dalla pagina prodotto: **corretto in "FH4/FH8, da verificare sul pezzo"**. Verificare anche che il link Amazon dell'utente sia la variante **Zero** (5 V) e non la **Zero-B** (la pagina prodotto cita per la Zero-B un ingresso 5–36 V: prodotto diverso, non confondere).
+**Discrepanza da risolvere:** wiki Waveshare = ESP32-C6**FH4** (4 MB), pagina prodotto = ESP32-C6**FH8** (8 MB). Verificare anche che il link Amazon sia la **Zero** (5 V) e non la **Zero-B** (la pagina prodotto cita per la Zero-B un ingresso 5–36 V).
 
 ## 2. Pinout (letto dall'immagine)
 
@@ -24,20 +23,44 @@ Requisiti: REQ-SW-001 (un ESP32-C6-Zero per scheda), REQ-SW-002. Stato: **Propos
 | Destro | TX (UART0, GP16), RX (UART0, GP17), GP14, GP15, GP18, GP19, GP20, GP21, GP22 |
 | Retro (castellati) | GP13, GP12, GP23, GP9 (BOOT), GP8 (LED WS2812, DIN), GP7, GP6 (ADC) |
 
-Totale **22 GPIO**, coerente con la pagina prodotto. Riservati dalla scheda: **GP8** (LED RGB WS2812), **GP9** (tasto BOOT), **GP12/GP13** (USB-C, USB-Serial-JTAG).
+**Riservati:** GP8 (LED RGB e strapping ROM-print/boot), GP9 (tasto BOOT, strapping boot mode), GP12/GP13 (USB-C, USB-Serial-JTAG).
 
-## 3. Regole di assegnazione (Assumed)
+## 3. Strapping GP4 / GP5 / GP15: esito (datasheet v1.5, §3)
 
-1. **Mai usare GP8, GP9, GP12, GP13**: LED, BOOT e USB. Il USB serve per il primo flash e il debug; l'OTA via Wi-Fi viene dopo.
-2. **Nessuna uscita su GP4, GP5, GP15** (strapping, regola di progetto): solo ingressi, e solo dopo aver letto i livelli di default sul datasheet. Un ingresso opto con pull-up a 3V3 su un pin di strappo può cambiare la configurazione di boot.
-3. **Logger su USB-Serial-JTAG**, così GP16/GP17 (UART0 di default) restano utilizzabili come UART dati. Il supporto ESPHome del logger su USB-Serial-JTAG per il C6 è **da verificare**.
-4. **Uscite verso gate/relè** su pin "puliti", con pull-down passivo sui gate (REQ-SW-002). Dopo il reset i GPIO del C6 sono ingressi: la tenuta dello stato sicuro resta alle reti passive.
-5. **Pin puliti disponibili (15):** GP0, 1, 2, 3, 6, 7, 14, 16, 17, 18, 19, 20, 21, 22, 23. **Solo ingresso (3):** GP4, 5, 15.
-6. Nessun ingresso analogico sui GPIO nativi: restano gli ADS1115/INA219 su I²C (invariato rispetto alla vecchia a8).
-7. Risveglio da deep sleep: gli RTC GPIO sono GP0…GP7. Un nodo Zigbee end device alimentato dalla batteria di bordo non lo richiede; resta legato a OPEN-08.
+| Pin | Funzione di strapping | Default al reset | Conclusione |
+|---|---|---|---|
+| GP4 (MTMS), GP5 (MTDI) | solo **fronte di campionamento/pilotaggio SDIO** (Tab. 3-4); "MTMS e MTDI sono floating di default" | floating (nessun pull); abilitato solo l'ingresso | **Nessun effetto** senza SDIO (che non usiamo): liberi come I/O normali, **anche uscite** |
+| GP15 | **sorgente JTAG** (Tab. 3-7), "non ha pull interni" | floating | Con le eFuse a valore di fabbrica (EFUSE_JTAG_SEL_ENABLE = 0, EFUSE_DIS_PAD_JTAG = EFUSE_DIS_USB_JTAG = 0) il valore è **ignorato**: libero. Se JTAG_SEL_ENABLE fosse bruciato a 1, GP15 dovrebbe essere pilotato da un circuito esterno mai in alta impedenza (un'uscita opto con pull-up va bene) |
+| GP8 | ROM-print su UART0 (Tab. 3-5) + boot mode (Tab. 3-3) | floating | non usato |
+| GP9 | boot mode: 1 = boot da SPI (default), 0 con GP8 = 1 = download | **weak pull-up** | non usato (tasto BOOT) |
 
-## 4. Rischi comuni
+Decisione: la regola "nessuna uscita sugli strapping" **vale solo per GP8 e GP9**; GP4, GP5 e GP15 sono usati come I/O generici. **Verifica sul pezzo:** leggere le eFuse (`espefuse summary`) per confermare i valori di fabbrica; MTMS/MTDI/MTCK/MTDO (GP4…GP7) sono anche i pin JTAG ma, di default, il JTAG è sull'USB-Serial-JTAG (Tab. 3-7, prima riga).
 
-- **Alimentazione:** 3V3 dall'LDO di bordo (ME6217C33M5G, 800 mA max, dalla pagina prodotto; **non** letto sullo schema). Con il Wi-Fi in trasmissione il modulo assorbe una parte rilevante di quegli 800 mA: il budget dei sensori sul 3V3 va fatto (IMU, magnetometro, INA219, ADS1115, DS18B20, LED di specchio sull'elettrica). In caso di eccedenza serve un regolatore 3V3 sulla PCB. Il 5 V per il pin 5V viene da un convertitore dalla linea 12–14,6 V (non ancora scelto; stesso tema di OPEN-08).
+## 4. Stato dei pin al reset: nuova regola (cambia la mappa)
+
+Dal datasheet (Tab. 2-1/2-2, note 4–6) e R_PU:
+
+| GPIO | Stato al reset / dopo il reset | Uso come uscita di sicurezza |
+|---|---|---|
+| **0, 1, 2, 3, 4, 5, 7, 14, 15** | solo ingresso abilitato (IE) o alta impedenza; **nessun pull** | **sì (9 pin "sicuri")** |
+| 6 (MTCK) | dopo il reset IE + **weak pull-up** (di default; con EFUSE_DIS_PAD_JTAG = 1 solo IE) | no |
+| 9 (BOOT) | **weak pull-up** | non usato |
+| 16 (U0TXD) | dopo il reset **uscita abilitata** + weak pull-up (idle alto; la ROM stampa i log di boot su UART0) | no |
+| 17 (U0RXD) | IE + **weak pull-up** | no |
+| **18…23** (pin SDIO) | **weak pull-up già durante il reset**; poi solo IE | no |
+
+R_PU tipico **45 kΩ** (nessun min/max nel datasheet). Conseguenza progettuale: un gate con pull-down da 47 kΩ su uno di questi pin (come R49/R59 degli stadi relè dell'inverter) sale a ≈ 3,3 × 47/(45 + 47) ≈ **1,7 V** e può accendere un BSS138 (soglia dell'ordine di 1 V, dato non verificato qui) durante il reset e tutto il boot. **Le uscite che devono restare spente al reset stanno solo sui 9 pin sicuri.** Sugli altri pin vanno solo: ingressi, bus con pull-up esterno (I²C, 1-Wire), UART, segnali attivi bassi con pull-up (opto, specchio LED) e uscite di eccitazione non critiche (con pull-down ≤ 4,7 kΩ: ≈ 0,3 V con R_PU = 45 kΩ, sotto la soglia).
+
+## 5. Altre regole (Assumed)
+
+1. **Mai usare GP8, GP9, GP12, GP13**: LED, BOOT e USB. L'USB serve per il primo flash e il debug; l'OTA via Wi-Fi viene dopo.
+2. **Logger su USB-Serial-JTAG**, così GP16/GP17 (UART0) restano utilizzabili come UART dati. Il supporto ESPHome del logger su USB-Serial-JTAG per il C6 è **da verificare**. Nota: all'avvio la ROM stampa su UART0 (GP16): chi sta sull'altra parte della UART vede qualche riga di testo a 115200 baud.
+3. **UART: due** (UART0, UART1) più una LP UART (datasheet §1): una per scheda (GPS sull'idraulica, RS485 sull'elettrica), con ampio margine.
+4. **ADC:** SAR ADC a 12 bit, fino a 7 canali (datasheet §1; dal pinout Waveshare GP0…GP6). Nessun ingresso analogico sui GPIO nativi: restano ADS1115/INA219 su I²C.
+5. **Deep sleep:** gli RTC GPIO sono GP0…GP7 (ESP-IDF, LP_GPIO0…7). Un nodo Zigbee end device alimentato dalla batteria di bordo non lo richiede; legato a OPEN-08.
+
+## 6. Rischi comuni
+
+- **Alimentazione:** 3V3 dall'LDO di bordo (ME6217C33M5G, 800 mA max, dalla pagina prodotto; non letto sullo schema). Con il Wi-Fi in trasmissione il modulo assorbe una parte rilevante di quegli 800 mA: budget del 3V3 da fare (IMU, magnetometro, INA219, ADS1115, DS18B20, specchio LED); in caso di eccedenza serve un regolatore 3V3 sulla PCB. Il 5 V per il pin 5V viene da un convertitore dalla linea 12–14,6 V (non ancora scelto; tema di OPEN-08).
 - **Antenna ceramica a bordo:** portata Zigbee in un vano metallico da provare (REQ-SW-001, rischio a).
-- **Una sola UART dati per scheda** grazie alla ripartizione GPS/RS485: nessuna scheda ne usa due.
+- **Schema Waveshare non letto:** pull-up/pull-down o partitori sulla scheda sui pin esposti non sono noti; verificare con multimetro sul modulo reale (GP4/5/15 in particolare).
