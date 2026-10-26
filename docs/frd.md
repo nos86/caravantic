@@ -5,7 +5,7 @@ Last updated: 2026-10-26
 
 ## 1. Contesto e scopo
 
-Scheda singola installata nel camper (Ducato X244 2005, 2.3 JTD), alimentata dalla batteria servizi LFP 12 V, integrata in Home Assistant via Wi-Fi (ESPHome su Waveshare ESP32-S3-Tiny). Raccoglie: assetto e posizione, stato serbatoio acque chiare e attuazione degli scarichi, misure energetiche (2 shunt, meter AC SDM120), stato cellula/cabina, stato/comando inverter. È master di un bus RS485 su cui possono aggiungersi slave futuri.
+Sistema di bordo su **due schede** (vedi §1.1) installato nel camper (Ducato X244 2005, 2.3 JTD), alimentata dalla batteria servizi LFP 12 V, integrata in Home Assistant via Wi-Fi (ESPHome su Waveshare ESP32-S3-Tiny). Raccoglie: assetto e posizione, stato serbatoio acque chiare e attuazione degli scarichi, misure energetiche (2 shunt, meter AC SDM120), stato cellula/cabina, stato/comando inverter. È master di un bus RS485 su cui possono aggiungersi slave futuri.
 
 **A monte:** batteria servizi 12 V, linea +12 V cabina, sensori serbatoio, shunt, inverter Renogy R-INVT-PUH1-201235-IT e suo comando remoto, SDM120.
 **A valle:** Home Assistant; comando remoto in cabina.
@@ -18,10 +18,10 @@ Il progetto è diviso in **due schede** (Confirmed). Specifiche e dettagli di im
 
 | Scheda | Cartella | Perimetro | REQ assegnati (Assumed) |
 |---|---|---|---|
-| Idraulica | [`idraulica/`](../idraulica/frd.md) | acque chiare, acque grigie, pompa, motori | EL-003, EL-004, EL-005, IF-003, IF-004, IF-009, IF-011 |
-| Elettrica | [`elettrica/`](../elettrica/frd.md) | shunt, inverter, relè globale | IF-005, IF-007, IF-008 |
+| Idraulica | [`idraulica/`](../idraulica/frd.md) | acque chiare, acque grigie, pompa, motori | EL-003, EL-004, EL-005, IF-001, IF-002, IF-003, IF-004, IF-009, IF-011 |
+| Elettrica | [`elettrica/`](../elettrica/frd.md) | shunt, inverter, relè globale | IF-005, IF-007, IF-008, IF-010 |
 
-**Non ancora assegnati (restano qui, da decidere insieme):** EL-001/EL-002 (alimentazione: probabilmente replicata su entrambe), EL-006/008/009 (ingressi opto IN-CAB/IN-CEL/AUX), EL-007, IF-001 (IMU/magnetometro), IF-002 (GPS), IF-010 (bus RS485), IF-012 (Ethernet), SW-001/002, ENV-001. Aperto: quale scheda ospita l'MCU, e come comunicano le due schede (OPEN-17). Mappa pin (a8), ingressi (a1) e IMU (a7) in `hardware/schematic/` sono **da rifare** dopo questa decisione.
+**Assegnati il 2026-10-26 (Confirmed):** IF-001 (IMU/magnetometro) e IF-002 (GPS) → idraulica; IF-010 (RS485, Assumed) → elettrica. **Replicati su entrambe:** EL-001, EL-002. **Non ancora assegnati:** EL-006/008/009 (ingressi opto), EL-007, ENV-001. Rimosso: IF-012. Cambiato: SW-001 (ESP32-C6-Zero, Zigbee). Mappa pin (a8) e ingressi (a1) in `hardware/schematic/` **da rifare** (OPEN-17).
 
 ## 2. Requisiti
 
@@ -29,10 +29,10 @@ Stato: Confirmed = dichiarato dall'utente · Assumed = ipotesi da confermare · 
 
 ### 2.1 Elettrici
 
-**REQ-EL-001** (Must, Assumed) — Alimentazione da batteria servizi LFP: operativo **12–14,6 V** continuo (minimo alzato da 10 V il 2026-10-18: sotto 12 V la LFP è scarica, scelta dell'utente), sopravvivenza a inversione di polarità e a 16 V continui.
+**REQ-EL-001** (Must, Assumed) — **Valido per ciascuna scheda, con catene d'ingresso indipendenti (Confirmed, utente 2026-10-26)**. Alimentazione da batteria servizi LFP: operativo **12–14,6 V** continuo (minimo alzato da 10 V il 2026-10-18: sotto 12 V la LFP è scarica, scelta dell'utente), sopravvivenza a inversione di polarità e a 16 V continui.
 *Rationale:* ripreso da rev. 1 e FRD positioning board. *Acceptance:* funzionamento a 10,0 V e 14,6 V; −16 V per 5 min senza danno.
 
-**REQ-EL-002** (Must, Assumed) — Catena di ingresso con rating ≥ 40 V e clamp TVS con V_C < rating del regolatore, impedenza serie conteggiata.
+**REQ-EL-002** (Must, Assumed) — **Replicato su ciascuna scheda** (fusibile e connettore propri; masse unite in un solo punto a stella, come IF-005; Confirmed 2026-10-26). Catena di ingresso con rating ≥ 40 V e clamp TVS con V_C < rating del regolatore, impedenza serie conteggiata.
 *Rationale:* bus condiviso con inverter 2000 W e caricabatterie. Riuso diretto di `old/hardware/schematics/01-power-supply.md` §1.
 
 
@@ -79,34 +79,11 @@ Prescrizioni:
 
 ### 2.2 Interfaccia / protocollo
 
-**REQ-IF-001** (Must, Confirmed) — IMU accelerometro + magnetometro su I²C, con driver **ESPHome nativo** (vincolo, Confirmed 2026-10-22). Precisione richiesta (Confirmed, utente 2026-10-22): **assetto (roll/pitch) ≤ 1°; heading del camper ≤ 5°**.
-*Rationale:* assetto per il livellamento con i cunei; heading del camper dal magnetometro. Il magnetometro resta (decisione utente).
-*Note (Assumed):* ±5° di heading in un veicolo con scocca in acciaio, batteria e carichi induttivi richiede calibrazione hard-iron/soft-iron a camper montato, compensazione dell'inclinazione con l'accelerometro e un magnetometro lontano da relè, motori e cavi di corrente (eventuale scheda satellite su I²C). Il componente ESPHome fornisce solo campo grezzo e heading semplice: calibrazione e compensazione sono a carico del firmware. MPU-6050 e HMC5883L esclusi per ciclo di vita (NRND / dismesso 2016; fonti deboli, distributori e forum).
-*Posizione (Confirmed, utente 2026-10-22):* magnetometro **sulla scheda principale, in un angolo lontano dai relè**; vincoli di layout (distanze Assumed) nel foglio a7.
-*Componenti (Congelati, utente 2026-10-22):* ST LSM6DSOX (IMU, U23; sostituisce l'LSM6DSO) e MEMSIC MMC5983MA (magnetometro); circuito Proposto in [`hardware/schematic/a7_imu_magnetometro.md`](../hardware/schematic/a7_imu_magnetometro.md).
-*Acceptance:* [B] roll e pitch entro ±1° rispetto a un riferimento (livella digitale) su camper fermo; [B] heading entro ±5° rispetto a una bussola di riferimento dopo calibrazione, con carichi spenti e accesi.
-
-**REQ-IF-002** (Must, Confirmed) — Ricevitore GPS su UART. Unità **esterna** su connettore a 4 poli passo 2,5 mm: 2 alimentazione + TX/RX (Confirmed, utente 2026-10-22). Da definire: serie del connettore, modello, tensione di alimentazione e livelli logici, baud rate e protocollo.
-
-
-
-
 **REQ-IF-006** (Won't, Confirmed) — Interfaccia diagnostica motore **non sulla board**: delegata a uno slave futuro sul bus RS485 (REQ-IF-010). Nota per lo slave: sul 2.3 JTD 2005 la diagnosi risulta K-line KWP2000, non CAN ([Klavkarr](https://www.klavkarr.com/compatible/fiat-ducatoii-243/244/245/247-17000121), fonte commerciale; [fiatforum](https://www.fiatforum.com/threads/problems-with-obd2-data-on-x244.511426), forum).
 
 
 
-**REQ-IF-010** (Must, Confirmed) — Il bus RS485 della board è **multi-drop ed estendibile** a slave futuri (es. slave diagnosi motore). Connettore con +12 V, GND, A, B per alimentare gli slave. Terminazione inseribile. Corrente massima erogabile agli slave da definire (OPEN-11).
-
-
-
-**REQ-IF-012** (Should, Assumed) — Collegamento Ethernet 10/100 Base-T verso uno **switch già presente a bordo** (Confirmed, utente 2026-10-22), per l'integrazione con Home Assistant via ESPHome.
-*Rationale (Confirmed, utente 2026-10-22):* eliminare i problemi di mancata connessione e le disconnessioni del Wi-Fi.
-*Vincoli (Assumed):* nessun PoE (la board resta alimentata a 12–14,6 V, REQ-EL-001); un solo controller SPI esterno, perché l'ESP32-S3 non ha MAC Ethernet interno (da verificare sul datasheet); linee verso l'esterno con protezione ESD/surge e isolamento fornito dalla magnetica; il numero di GPIO assorbiti non deve costringere a togliere funzioni Must (conteggio pin da fare); assorbimento aggiunto compatibile con il budget del 3V3 e con OPEN-08.
-*Strategia pin (Confirmed, utente 2026-10-22):* l'ESP32-S3-Tiny resta; i GPIO per il controller Ethernet si liberano spostando su **expander I²C** gli I/O digitali lenti (ingressi opto, relè, pilotaggio valvola/pistone, eccitazioni, LED/relè del remote inverter). Restano su GPIO nativi i segnali che un expander non può portare: SPI del controller Ethernet, UART (GPS, RS485), 1-Wire, SDA/SCL (*Assumed:* elenco da confermare con la mappa pin).
-*Vincoli aggiunti dalla strategia (Assumed):* (a) all'avvio e al reset dell'ESP le uscite degli expander *shall* tornare a uno stato sicuro (valvola, pistone, relè fermi), con RESET degli expander collegato al reset dell'ESP o a un supervisore e pull-down passivi sui gate (REQ-SW-002); (b) **nessuna protezione hardware indipendente dal bus** sullo spegnimento del pistone (REQ-EL-004, 7 A / 200 ms) e della valvola: valvola e pistone hanno finecorsa/arresti meccanici e la soglia di 7 A protegge i componenti in un caso limite; il caso "bus I²C bloccato + finecorsa difettoso" è un doppio guasto, **rischio accettato (Confirmed, utente 2026-10-22)**. Protezione firmware: **RESET degli expander comandato da un GPIO nativo dell'ESP** (Assumed, vedi sotto);
-*RESET degli expander (Assumed):* linea attiva bassa, **tenuta a livello di reset da un pull-down passivo** e rilasciata dal firmware a fine inizializzazione, così che durante reset/boot/watchdog dell'ESP gli expander siano fermi (uscite ad alta impedenza + pull-down sui gate, REQ-SW-002) e il firmware possa impulsare il reset come arresto d'emergenza o per sbloccare il bus. GPIO non di strappo. Da verificare sul datasheet dell'expander scelto: presenza del pin RESET, ripristino della macchina a stati I²C, larghezza minima dell'impulso e tempo di recupero, soglie V_IL/V_IH rispetto al GPIO dell'S3; (c) ~~expander su un bus I²C separato da quello dei sensori~~ **superato (utente 2026-10-23): bus I²C unico** per expander e sensori (IMU, magnetometro, INA219, 2× ADS1115), indirizzi senza conflitti, pull-up e velocità da dimensionare sulla capacità (a8 §2.4), blocco del bus gestito dal firmware con `EXP_RESET`; (d) tempo di risposta degli ingressi ≤ 100 ms (REQ-EL-006) con polling o interrupt.
-*Da decidere (OPEN-16):* Wi-Fi mantenuto come fallback o disattivato; distanza e percorso del cavo verso lo switch; connettore RJ45 con magnetica integrata o discreta.
-*Acceptance:* [B] il nodo si registra in HA via cavo con Wi-Fi disattivato e mantiene la sessione per 24 h senza disconnessioni; [B] stacco e riattacco del cavo: il nodo ricompare in HA entro 30 s senza reset (soglia Assumed); [B] consumo aggiunto a 12 V misurato e annotato; [D] i pin usati non entrano in conflitto con gli ingressi/uscite Must e con gli strapping dell'ESP32-S3.
+**REQ-IF-012** (Won't, Confirmed) — Ethernet verso lo switch di bordo: **rimosso il 2026-10-26** (decisione utente). Con ESP32-C6 (Zigbee primario, Wi-Fi per OTA/fallback, REQ-SW-001) il collegamento cablato non serve; si eliminano controller SPI, magnetica e connettore RJ45. Il testo precedente è nel commit `9b410f6`.
 
 ### 2.3 Ambientali
 
@@ -114,7 +91,10 @@ Prescrizioni:
 
 ### 2.4 Software / firmware
 
-**REQ-SW-001** (Must, Confirmed) — Integrazione con Home Assistant via ESPHome su **Waveshare ESP32-S3-Tiny** (stesso modulo della rev. 1). UART necessarie: GPS, RS485, eventuale inverter (se seriale) — rientrano nelle 3 UART dell'ESP32-S3.
+**REQ-SW-001** (Must, Confirmed) — Integrazione con Home Assistant via ESPHome, **un MCU per scheda** (idraulica ed elettrica), modulo **Waveshare ESP32-C6-Zero** (ESP32-C6FH8, 8 MB flash, 22 GPIO, LDO onboard ME6217C33M5G 800 mA; Confirmed, utente 2026-10-26; sostituisce l'ESP32-S3-Tiny). **Zigbee primario** (end device), **Wi-Fi per aggiornamento firmware** e come ripiego se Zigbee non copre un'entità (Confirmed, utente 2026-10-26). Le due schede **non hanno un link diretto**: il coordinamento avviene in Home Assistant.
+*Verifica documentazione ESPHome (2026-10-26, [esphome.io/components/zigbee](https://esphome.io/components/zigbee/), fonte primaria; scheda: [pagina Waveshare](https://www.waveshare.com/esp32-c6-zero.htm), pinout solo in immagine, non letto):* su ESP32 con 802.15.4 (C6, H2) sono esposti **binary_sensor, sensor, switch (cluster on_off) e number**; non luce, cover o output. Wi-Fi station + Zigbee **end device** funziona, con **router** è instabile; AP + Zigbee non supportato; solo profilo Home Automation; serve coordinatore ZHA o Zigbee2MQTT; ogni modifica di configurazione può richiedere di rimuovere e riaggiungere il dispositivo; la pagina avverte che l'H2 appare più affidabile del C6 e che alcune schede C6 funzionano solo vicino al coordinatore. L'OTA via Zigbee non è documentata: l'OTA resta su Wi-Fi.
+*Rischi (Assumed):* (a) portata Zigbee in un abitacolo metallico: prova al banco con il coordinatore reale; (b) il Wi-Fi resta acceso per l'OTA, quindi nessun uso come router Zigbee; (c) comandi critici (valvola, pistone) via switch Zigbee: latenza e perdita di pacchetto, stato sicuro di REQ-SW-002 invariato; (d) 22 GPIO nominali, ADC solo su un sottoinsieme, strapping e USB da leggere sul pinout Waveshare: **mappa pin da rifare per ciascuna scheda**; (e) UART del C6 da verificare (GPS sull'idraulica, RS485 sull'elettrica); (f) il driver IMU ESPHome nativo (IF-001) non cambia.
+*Acceptance:* [B] entità visibili in HA via Zigbee dopo l'accoppiamento; [B] comando di uno switch Zigbee eseguito entro 1 s (soglia Assumed); [B] OTA via Wi-Fi riuscito con il nodo accoppiato; [B] il nodo resta accoppiato dopo il riavvio del coordinatore.
 
 **REQ-SW-002** (Must, Assumed) — Stato sicuro: al reset/brown-out valvola e pistone fermi, relè diseccitato, per sole reti passive (pull-down). Riuso del principio rev. 1.
 
@@ -129,9 +109,9 @@ Prescrizioni:
 | ~~OPEN-10~~ | Chiuso 2026-10-22: assetto ≤ 1°, heading ≤ 5° | IF-001 |
 | OPEN-11 | Corrente da erogare agli slave RS485 su +12 V | IF-010 |
 | OPEN-12 | Uscita "stato cellula" della centralina: modello della centralina, tipo di uscita (high-side 12 V / open-collector / contatto), livelli a cellula ON e OFF | EL-006 |
-| OPEN-16 | Ethernet: Wi-Fi mantenuto come fallback o disattivato? Distanza/percorso del cavo verso lo switch; RJ45 con magnetica integrata o discreta; mappa pin nativi/expander: **proposta in [`hardware/schematic/a8_mappa_pin.md`](../hardware/schematic/a8_mappa_pin.md)** (19 pin nativi su 19 dell'header, margine zero; 12 pad di scorta da verificare fisicamente; IO33–37 da leggere sul datasheet Espressif); famiglia e indirizzi degli expander (stato al reset, RESET, corrente per pin da datasheet); supporto ESPHome del controller scelto su ESP32-S3 (da verificare) | IF-012 |
+| ~~OPEN-16~~ | Chiuso 2026-10-26: Ethernet rimosso (IF-012 Won't). Mappa pin ed expander da rifare per scheda su ESP32-C6-Zero (vedi OPEN-17) | IF-012 |
 
-| OPEN-17 | **[Nuovo 2026-10-26]** Con due PCB: quale scheda ospita l'ESP32-S3 e i bus I²C/RS485? Un MCU per scheda o uno solo con cavo fra le schede (I²C/RS485/CAN)? Dove vanno IMU, GPS, Ethernet, ingressi cabina/cellula, alimentazione (una catena o due)? Massa e alimentazione fra le schede | IF-012, EL-001 |
+| OPEN-17 | **[Ridotto 2026-10-26]** Decisi: un ESP32-C6-Zero per scheda, Zigbee primario/Wi-Fi OTA, nessun link diretto, alimentazioni indipendenti, IMU+GPS sull'idraulica, RS485 sull'elettrica. Restano: assegnazione degli ingressi opto IN-CAB/IN-CEL/IN-AUX (EL-006/008/009) e di EL-007; massa e cavo di alimentazione fra le schede; mappa pin per scheda (a8 è per S3 + expander, **superata**); se gli expander I²C servono ancora | EL-006, EL-007 |
 
 _I punti aperti specifici di scheda sono in `idraulica/frd.md` e `elettrica/frd.md`._
 
@@ -194,3 +174,4 @@ _I punti aperti specifici di scheda sono in `idraulica/frd.md` e `elettrica/frd.
 | 2026-10-23 | a8: ingressi analogici `IN_VALVE_SENSE`, `IN_PISTON_SENSE`, `GRY_SNS` su secondo ADS1115 (0x49) sul bus sensori; liberati IO1, IO2, IO4. Rischio accettato: blocco del bus sensori = nessuna misura di corrente su valvola/pistone (EL-003, EL-004) | Decisione utente |
 | 2026-10-23 | IF-012 (c): bus I²C unico per expander e sensori, rischio accettato; verifica in a8 §2.4: pull-up 2,2 kΩ (non 4,7 kΩ), 100 kHz iniziali, arresto/recupero via `EXP_RESET` | Decisione utente |
 | 2026-10-26 | Progetto diviso in due PCB: idraulica (chiare, grigie, pompa, motori) ed elettrica (shunt, inverter, relè globale). Requisiti, componenti, schemi e simulazioni spostati in `idraulica/` ed `elettrica/`; il comune resta in `docs/` e `hardware/`. Nuovi: pompa (NEW-1), relè globale (NEW-2), OPEN-17 | Decisione utente |
+| 2026-10-26 | Un ESP32-C6-Zero per scheda (sostituisce S3-Tiny), Zigbee primario + Wi-Fi OTA, nessun link fra le schede, alimentazioni indipendenti; IMU e GPS → idraulica, RS485 → elettrica; IF-012 Ethernet rimosso (OPEN-16 chiuso); OPEN-17 ridotto | Decisione utente; verifica docs ESPHome |

@@ -23,6 +23,16 @@ Stato: Confirmed = dichiarato dall'utente · Assumed = ipotesi da confermare · 
 
 ### 1.2 Interfaccia / protocollo
 
+**REQ-IF-001** (Must, Confirmed) — IMU accelerometro + magnetometro su I²C, con driver **ESPHome nativo** (vincolo, Confirmed 2026-10-22). Precisione richiesta (Confirmed, utente 2026-10-22): **assetto (roll/pitch) ≤ 1°; heading del camper ≤ 5°**.
+*Rationale:* assetto per il livellamento con i cunei; heading del camper dal magnetometro. Il magnetometro resta (decisione utente).
+*Note (Assumed):* ±5° di heading in un veicolo con scocca in acciaio, batteria e carichi induttivi richiede calibrazione hard-iron/soft-iron a camper montato, compensazione dell'inclinazione con l'accelerometro e un magnetometro lontano da relè, motori e cavi di corrente (eventuale scheda satellite su I²C). Il componente ESPHome fornisce solo campo grezzo e heading semplice: calibrazione e compensazione sono a carico del firmware. MPU-6050 e HMC5883L esclusi per ciclo di vita (NRND / dismesso 2016; fonti deboli, distributori e forum).
+*Posizione (Confirmed, utente 2026-10-22):* magnetometro **sulla scheda idraulica (Confirmed, utente 2026-10-26: IMU e magnetometro sull'idraulica), in un angolo lontano da relè, motori e cavi di corrente**; vincoli di layout (distanze Assumed) nel foglio a7.
+*Componenti (Congelati, utente 2026-10-22):* ST LSM6DSOX (IMU, U23; sostituisce l'LSM6DSO) e MEMSIC MMC5983MA (magnetometro); circuito Proposto in [`schematic/a7_imu_magnetometro.md`](schematic/a7_imu_magnetometro.md).
+*Acceptance:* [B] roll e pitch entro ±1° rispetto a un riferimento (livella digitale) su camper fermo; [B] heading entro ±5° rispetto a una bussola di riferimento dopo calibrazione, con carichi spenti e accesi.
+
+**REQ-IF-002** (Must, Confirmed) — Ricevitore GPS su UART. Unità **esterna** su connettore a 4 poli passo 2,5 mm: 2 alimentazione + TX/RX (Confirmed, utente 2026-10-22). Da definire: serie del connettore, modello, tensione di alimentazione e livelli logici, baud rate e protocollo.
+*Scheda (Confirmed, utente 2026-10-26):* GPS sulla scheda idraulica; UART del C6 da verificare (REQ-SW-001).
+
 **REQ-IF-003** (Must, Confirmed) — Livello serbatoio acque chiare da sender resistivo a galleggiante tipo automotive, **0–190 Ω**, verso massa.
 *Rationale:* scelta utente. *Acceptance:* lettura monotona su tutta la corsa; errore ≤ ±5 % fondo scala dopo taratura a 3 punti (vuoto, metà, pieno) — soglia Assumed.
 Note: verso della caratteristica (0 Ω = vuoto o pieno) da verificare sul pezzo (OPEN-15); eccitazione sezionabile e fondo scala ADC ≤ 2,45 V (riuso rev. 1).
@@ -43,7 +53,7 @@ Note: verso della caratteristica (0 Ω = vuoto o pieno) da verificare sul pezzo 
 |---|---|---|
 | OPEN-04 | Nessun datasheet con correnti trovato (verifica 2026-10-14). **Da misurare sulle unità reali a 10 V e 12 V:** corrente a vuoto/carico/stallo e comportamento ai finecorsa di valvola e pistone; cablaggio valvola (schema utente: nero −, rosso apre, blu chiude, da verificare con multimetro; il motore si ferma a fine corsa?; fail-safe); modello definitivo del pistone (con finecorsa interni, Confirmed 2026-10-14; il VEVOR è solo un candidato) e sua corrente di stallo | EL-003, EL-004 |
 | OPEN-05 | Sensore temperatura serbatoio: tipo chiuso 2026-10-15 (DS18B20). Resta: scopo (solo monitoraggio / avviso antigelo / azione automatica?), lunghezza del cavo (~~VDD protetto da 24 V~~: deciso, nessuna protezione) | IF-004 |
-| OPEN-07 | Interfaccia comando cabina — vedi §4 | IF-009 |
+| OPEN-07 | Interfaccia comando cabina — vedi §4. **Premessa superata il 2026-10-26:** l'RS485 è ora sull'elettrica e le schede non hanno link; il comando cabina potrebbe essere un nodo Zigbee (ESP32-C6/H2 con ESPHome) sulla stessa rete, o Wi-Fi | IF-009 |
 | OPEN-13 | 4 relè generici: carichi previsti per canale, corrente/tensione contatti, solo 12 V DC o anche 230 V AC, assorbimento bobine | EL-005 |
 | OPEN-14 | Sonda grigie (morsetto 13 DS300): da misurare con multimetro sul DS300 reale — tensione a vuoto fra i due poli (DC/AC, polarità), corrente di corto, resistenza della sonda in aria e immersa/sporca; sonda spostata sulla board o in parallelo al DS300? | IF-011 |
 | OPEN-15 | Sender livello chiare: da misurare con multimetro sul pezzo reale — resistenza a vuoto e a pieno (verso: 0 Ω = vuoto o pieno?), 2 fili o corpo a massa, corrente massima tollerata, lunghezza cavo | IF-003 |
