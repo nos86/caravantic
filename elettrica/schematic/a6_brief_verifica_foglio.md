@@ -3,10 +3,10 @@
 Da incollare come primo messaggio nella nuova sessione con l'MCP attivo. Obiettivo: leggere il foglio **Inverter interface** (schematico "Mainboard", board "Caravantic") e dire se è **in linea con i requisiti** e se lo **schematico è corretto**. Sola lettura: non modificare il foglio, non toccare `*.eprj2`, non promuovere stati.
 
 ## Fonti da leggere prima
-- `docs/frd.md`: REQ-IF-007, REQ-SW-002, REQ-EL-006, REQ-EL-008, OPEN-02. Nota: EL-001 (10–14,6 V) è **Assumed** e l'utente ha detto che 10 V non è una tensione operativa per la LFP; il limite basso non è ancora fissato.
-- `hardware/schematic/a6_remote_inverter.md`: **sezioni vecchie superate**; vale l'ultima: "Rettifica 2026-10-18 (sera)" + "Revisione schema 2026-10-18" + "Specchio LED in hardware". Le sezioni "via A/B", "GPIO push-pull" e "open-drain" sono superate.
-- `docs/components.md`: IM06 (K_TAKE/K_LVL, riserva sul pick-up), BSS84K HJC C54795811 (Q9/Q10), TLP293-GB, celle EL-006.
-- `hardware/schematic/a3_sonda_grigie.md` ("Rilettura dal vivo"): **limite noto del tool**: la connettività non è verificabile via MCP (snapshot parziale di pin e fili); se vale ancora, chiedere all'utente uno screenshot del foglio per le connessioni e usare l'MCP per proprietà, valori e part number.
+- `elettrica/frd.md`: REQ-IF-007, REQ-SW-002, REQ-EL-006, REQ-EL-008, OPEN-02. Nota: EL-001 (10–14,6 V) è **Assumed** e l'utente ha detto che 10 V non è una tensione operativa per la LFP; il limite basso non è ancora fissato.
+- `elettrica/schematic/a6_remote_inverter.md`: **sezioni vecchie superate**; vale l'ultima: "Rettifica 2026-10-18 (sera)" + "Revisione schema 2026-10-18" + "Specchio LED in hardware". Le sezioni "via A/B", "GPIO push-pull" e "open-drain" sono superate.
+- `elettrica/components.md`: IM06 (K_TAKE/K_LVL, riserva sul pick-up), BSS84K HJC C54795811 (Q9/Q10), TLP293-GB, celle EL-006.
+- `idraulica/schematic/a3_sonda_grigie.md` ("Rilettura dal vivo"): **limite noto del tool**: la connettività non è verificabile via MCP (snapshot parziale di pin e fili); se vale ancora, chiedere all'utente uno screenshot del foglio per le connessioni e usare l'MCP per proprietà, valori e part number.
 
 ## Design atteso (da confrontare col foglio)
 Connettori: RJ45 lato inverter e RJ45 lato remote. Pinout Renogy (Assumed, lettura confermata dall'utente): 2 GND · 3 +12 V · 4 VERDE · 5 VIN · 7 ROSSO · 1,6,8 NC. Contatto del remote fra pin 3 e 5.

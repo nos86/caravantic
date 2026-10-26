@@ -69,7 +69,7 @@ Con remote **scollegato**, multimetro su RJ45 inverter, inverter in posizione II
 - Due relè: **K_TAKE** (polo 1 = scambio su VIN: C = VIN inverter, NC = VIN remote, NO = `VIN_BRD`) e **K_LVL** (polo 1: C = +12 V pin 3 tramite R serie, NO = `VIN_BRD`). Il secondo polo di ciascuno resta libero (regola rev. 1: mai in parallelo al primo).
 - Pilotaggio identico a EL-005: BSS138 low-side + 1N4148WS di ricircolo + pull-down di gate 100 kΩ. A riposo: entrambi diseccitati ⇒ remote diretto (IF-007 d, SW-002) con sole reti passive.
 - Bobina: 1029 Ω ⇒ 11,7 mA a 12 V, 15,5 mA a 16 V; due relè ≈ 23–31 mA, trascurabile.
-- Perché IM06: relè da segnale, contatti adatti a bassa corrente; dati rev. 1 già letti a datasheet (finestra 10–16 V). **Da riverificare per rev. 2** (carico minimo, pick-up a 10 V alta temperatura, disponibilità LCSC): verifica del 2026-10-18 in `docs/components.md`: **pick-up 9,0 V a 25 °C, probabilmente ~10,6–11,2 V a 70–85 °C ⇒ a 10 V di batteria può non chiudere**. Opzioni: relè con bobina 5 V alimentata dal rail +5V (stesso IM06 in variante 5 V, da verificare), o relè con soglia più bassa. Da decidere.
+- Perché IM06: relè da segnale, contatti adatti a bassa corrente; dati rev. 1 già letti a datasheet (finestra 10–16 V). **Da riverificare per rev. 2** (carico minimo, pick-up a 10 V alta temperatura, disponibilità LCSC): verifica del 2026-10-18 in `elettrica/components.md`: **pick-up 9,0 V a 25 °C, probabilmente ~10,6–11,2 V a 70–85 °C ⇒ a 10 V di batteria può non chiudere**. Opzioni: relè con bobina 5 V alimentata dal rail +5V (stesso IM06 in variante 5 V, da verificare), o relè con soglia più bassa. Da decidere.
 - Scartati: ST8N-2C-12S (pistone, contatti di potenza, bobina più grande: inutile per milliampere); stato solido: perde l'isolamento fra il dominio inverter e la board.
 - Rischio: **commutazione di K_TAKE break-before-make**: per qualche ms VIN è fluttuante. Sequenza firmware: prima K_LVL = stato attuale del remote (letto da `REM_SW`), poi K_TAKE. Se l'inverter reagisce ai fronti di VIN (non si sa) il glitch lo spegne: da provare al banco.
 
@@ -140,7 +140,7 @@ Lo schematico reale (screenshot utente) rende **superata** la sezione precedente
 
 - **Funzione:** specchio hardware senza firmware. LED dell'inverter acceso ⇒ opto conduce ⇒ nodo basso ⇒ Q9 conduce ⇒ 3V3 attraverso 220 Ω al LED del remote. Il 12 kΩ è proprio il pull-up di gate: il riuso è corretto (risposta precedente sbagliata: avevo letto il 12 kΩ come pull-up del LED).
 - **Bidirezionale:** il GPIO sul nodo in **open-drain** (in uscita e in ingresso insieme, `GPIO_MODE_INPUT_OUTPUT_OD` in ESP-IDF; non riletto su TRM) lo tira basso ⇒ Q9 conduce ⇒ LED acceso. Rilascio ⇒ il 12 kΩ lo riporta alto ⇒ LED spento. Wired-OR: LED acceso se acceso dall'inverter **o** forzato dall'ESP. Nessun GPIO di pilotaggio in più: 4 ingressi/ingressi-uscite (12 V, REQ, GREEN, RED) + relè.
-- **Corrente LED:** (3,3 − V_F ≈ 2)/(220 Ω + 1 kΩ + R_DS(on)) ≈ **1,05 mA** (ipotesi: LED + 1 kΩ del remote RJ11, V_F 2 V), pari a quanto assorbiva con l'inverter. BSS84K (HJC, C54795811): datasheet letto e corrente LED simulata 0,72–0,98 mA (peggiore 0,54 mA), vedi `docs/components.md` e la revisione dello schema più sotto.
+- **Corrente LED:** (3,3 − V_F ≈ 2)/(220 Ω + 1 kΩ + R_DS(on)) ≈ **1,05 mA** (ipotesi: LED + 1 kΩ del remote RJ11, V_F 2 V), pari a quanto assorbiva con l'inverter. BSS84K (HJC, C54795811): datasheet letto e corrente LED simulata 0,72–0,98 mA (peggiore 0,54 mA), vedi `elettrica/components.md` e la revisione dello schema più sotto.
 - **Stato sicuro:** GPIO in reset in alta Z ⇒ nodo alto ⇒ Q9/Q10 spenti; relè diseccitati ⇒ il drain non è collegato al remote.
 - **Lampeggio verde:** l'ESP tira basso a 1 Hz quando ha il controllo e l'inverter non è acceso. Durante la fase di rilascio il nodo riflette lo stato dell'inverter (campionare a fine fase; τ ≈ 12 kΩ × poche decine di pF, trascurabile); durante la fase bassa lo stato dell'inverter non è leggibile.
 - **Rischi aperti:** (1) corto del pin 4/7 al pin 3 (+12 V adiacente): il corpo-diodo di Q9 porta (12 − 3,3 − 0,7)/220 Ω ≈ 36 mA nel rail 3V3 (55 mA a 16 V, 0,66 W in R57 da 0805): oltre il rating e il rail 3V3 non sink-a; già censito (Schottky serie al drain, vedi revisione schema più sotto); (2) se il LED dell'inverter lampeggia per un guasto, la fase di forzatura ESP maschera il lampeggio solo se in corso; (3) specchio con tolleranza di V_F del LED non misurata.
@@ -165,7 +165,7 @@ Richiesta prima della scelta dei relè (REQ-IF-007 + risultati di queste misure)
 
 ## Specchio LED in hardware (discussione 2026-10-18; SUPERATA sul part number: Q9/Q10 = BSS84K HJC C54795811, vedi ultima revisione)
 
-P-MOSFET high-side per LED: ~~BSS84-7-F (C85202)~~, source a 3V3, gate direttamente su `SIG_INVERTER_GREEN/RED`, drain → R serie + clamp → pin 4/7 lato remote (relè K_TAKE eccitato). Il firmware legge gli stessi nodi per HA. Esito della verifica e rischi (margine di pilotaggio, body diode su cavo esposto, pinout) in `docs/components.md`. Da fare: simulare/misurare a −20 °C; leggere il PDF Diodes; decidere R serie e clamp.
+P-MOSFET high-side per LED: ~~BSS84-7-F (C85202)~~, source a 3V3, gate direttamente su `SIG_INVERTER_GREEN/RED`, drain → R serie + clamp → pin 4/7 lato remote (relè K_TAKE eccitato). Il firmware legge gli stessi nodi per HA. Esito della verifica e rischi (margine di pilotaggio, body diode su cavo esposto, pinout) in `elettrica/components.md`. Da fare: simulare/misurare a −20 °C; leggere il PDF Diodes; decidere R serie e clamp.
 
 ## Revisione schema 2026-10-18 (foglio EasyEDA, Q9/Q10 = BSS84K)
 
@@ -174,7 +174,7 @@ P-MOSFET high-side per LED: ~~BSS84-7-F (C85202)~~, source a 3V3, gate direttame
 - Il riquadro con la croce al gate è la protezione ESD gate-source integrata del BSS84K, non un pin non collegato (ritirata la mia osservazione precedente).
 - Resta da fare: relè K_TAKE sui pin 4/7/VIN (non disegnati), diodo Schottky serie al drain per il body diode verso il 3V3, verifica del BSS84K sul datasheet Nexperia.
 
-- **Q9/Q10 = LCSC C54795811** (HJC BSS84K, scelta utente 2026-10-18): datasheet letto, V_th max −2,2 V, pinout 1 = G, 2 = S, 3 = D, ESD 2 kV HBM. Corrente simulata nel LED 0,72–0,98 mA (caso peggiore 0,54 mA). Dettagli in `docs/components.md`.
+- **Q9/Q10 = LCSC C54795811** (HJC BSS84K, scelta utente 2026-10-18): datasheet letto, V_th max −2,2 V, pinout 1 = G, 2 = S, 3 = D, ESD 2 kV HBM. Corrente simulata nel LED 0,72–0,98 mA (caso peggiore 0,54 mA). Dettagli in `elettrica/components.md`.
 
 
 ## Designatori sul foglio EasyEDA (letti dallo screenshot, 2026-10-18; connettività dedotta, MCP non connesso)

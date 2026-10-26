@@ -1,6 +1,6 @@
 # Schematico A2 — Stadio valvola motorizzata (pagina 3 del foglio EasyEDA)
 
-Requisiti: REQ-EL-003 (pilotaggio valvola con misura di corrente, Confirmed), REQ-SW-002 (stato sicuro per sole reti passive). Registro componenti: [`../../docs/components.md`](../../docs/components.md), sezione "Stadio valvola (EL-003)" e verifiche della pagina 3. Rev. 2026-10-15: **designatori allineati allo schematico reale; verificato circuitalmente** (terza rilettura live, nessun errore residuo). Codici, MPN e disponibilità non sono oggetto di questa verifica.
+Requisiti: REQ-EL-003 (pilotaggio valvola con misura di corrente, Confirmed), REQ-SW-002 (stato sicuro per sole reti passive). Registro componenti: [`../components.md`](../components.md), sezione "Stadio valvola (EL-003)" e verifiche della pagina 3. Rev. 2026-10-15: **designatori allineati allo schematico reale; verificato circuitalmente** (terza rilettura live, nessun errore residuo). Codici, MPN e disponibilità non sono oggetto di questa verifica.
 
 Scelte dell'utente: due interruttori high-side discreti (P-MOSFET + BSS138); P-MOSFET HXY `DMP4065S-7-HXY` (dati solo da listino); op-amp di misura separato da quello del pistone; alimentazione dalla linea `Vmot` (la stessa del pistone: P2.1 e contatti di K1).
 

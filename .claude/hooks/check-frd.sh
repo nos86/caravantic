@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# PostToolUse: dopo una modifica a docs/*.md verifica la coerenza di docs/frd.md.
+# PostToolUse: dopo una modifica a docs/, idraulica/ o elettrica/ (*.md) verifica la coerenza dei FRD (comune + due schede, trattati come un insieme).
 input=$(cat)
 f=$(printf '%s' "$input" | grep -o '"file_path"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/^[^:]*:[[:space:]]*"//; s/"$//')
-printf '%s' "$f" | grep -Eq 'docs[\\/]+[^\\/]*\.md$' || exit 0
-frd="${CLAUDE_PROJECT_DIR:-.}/docs/frd.md"
-[ -f "$frd" ] || exit 0
+printf '%s' "$f" | grep -Eq '(docs|idraulica|elettrica)[\/]+[^\/]*\.md$' || exit 0
+root="${CLAUDE_PROJECT_DIR:-.}"
+frds=""
+for x in docs/frd.md idraulica/frd.md elettrica/frd.md; do [ -f "$root/$x" ] && frds="$frds $root/$x"; done
+[ -n "$frds" ] || exit 0
+frd=$(mktemp); cat $frds > "$frd"; trap 'rm -f "$frd"' EXIT
 err=""
 # 1. ID requisito duplicati
 dup=$(grep -o '^\*\*REQ-[A-Z]*-[0-9]*\*\*' "$frd" | sort | uniq -d | tr -d '*')
