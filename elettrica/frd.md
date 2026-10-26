@@ -32,11 +32,14 @@ Funzioni: (a) lettura stato LED verde (POWER) e rosso (FAULT); (b) comando on/of
 
 **REQ-IF-008** (Must, Confirmed) — Modbus RTU su RS485 verso meter SDM120 (board = master).
 
+**REQ-IF-010** (Must, Confirmed) — Il bus RS485 della board è **multi-drop ed estendibile** a slave futuri (es. slave diagnosi motore). Connettore con +12 V, GND, A, B per alimentare gli slave. Terminazione inseribile. Corrente massima erogabile agli slave da definire (OPEN-11).
+*Scheda (Assumed, 2026-10-26):* RS485 sulla scheda elettrica (SDM120, IF-008). Con un MCU per scheda e nessun link diretto, il bus **non è più condiviso** col comando cabina (vedi OPEN-07 in `idraulica/frd.md`).
+
 ## 2. Punti aperti
 
 | ID | Domanda | Requisiti |
 |---|---|---|
 | OPEN-02 | **[Riaperto 2026-10-17]** Connettore RJ45 e piedinatura forniti da Renogy (IF-007). Restano: verifica piedinatura sul pezzo (lettura del disegno confermata 2026-10-17); selettore 0/I/II presente?; misure sul pezzo per pin in OFF/ON/FAULT (+12 V a vuoto, VIN a contatto aperto e chiuso con corrente, livello e corrente dei pin LED, verso del LED nel remote) | IF-007 |
 | OPEN-06 | Shunt: confermare precisione (1 %) e risoluzione (0,1 A); lunghezza cavi Kelvin | IF-005 |
-| NEW-2 | **Relè globale**: funzione (stacco generale servizi? su quale linea?), corrente/tensione contatti, comando e stato (NA/NC, fail-safe), protezione e misura. Nessun requisito scritto: usare la skill `hardware-requirements-engineer` | — |
+| NEW-2 | **Relè globale**: funzione (stacco generale servizi? su quale linea?), corrente/tensione contatti, comando e stato (NA/NC, fail-safe), protezione e misura. **Vincolo (Confirmed, utente 2026-10-26): il relè globale non deve togliere l'alimentazione all'MCU.** Nessun requisito scritto: usare la skill `hardware-requirements-engineer` | — |
 

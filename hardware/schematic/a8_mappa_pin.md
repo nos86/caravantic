@@ -1,5 +1,7 @@
 # A8 — Mappa pin: GPIO nativi ed expander I²C
 
+> **SUPERATA il 2026-10-26** (REQ-SW-001: due schede con ESP32-C6-Zero, IF-012 Ethernet rimosso). La mappa descrive un unico ESP32-S3-Tiny + expander MCP23017 e va rifatta per ciascuna scheda (OPEN-17). Conservata come riferimento.
+
 Requisiti: REQ-IF-012 (Ethernet, strategia pin), REQ-SW-001, REQ-SW-002, OPEN-16. Stato di tutto ciò che segue: **Proposto / Assumed**. Nessun componente scelto (famiglia di expander da decidere).
 
 ## 1. Pin disponibili sul Waveshare ESP32-S3-Tiny
