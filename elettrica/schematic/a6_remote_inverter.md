@@ -15,7 +15,7 @@ Due soli relè **Omron G6K-2F-Y-TR DC12** (non tre, non IM06), ciascuno pilotato
 - K3 ha effetto solo con K2 eccitato. Con K2 diseccitato il remote comanda comunque, qualunque sia K3.
 - Sequenza firmware: prima K3 = stato attuale del remote (letto da `SIG_INVERTER_REQ`, U17), poi K2; HA può poi forzare K3. In reset e a board spenta entrambi i relè sono diseccitati (sole reti passive, SW-002) ⇒ remote diretto.
 - Punto chiuso 2026-10-18 (utente): i relè commutano solo VIN/+12 V; i drain di Q9/Q10 (R57/R58) vanno ai pin 4/7 di RJ2 senza relè, per scelta di progetto. Resta solo da rileggere sul foglio a quale nodo va il polo NO di K3 (+12 V con R serie, come in "Rischi" sotto).
-- Pilotaggio: GPIO → R50/R60 1 kΩ → gate; R49/R59 47 kΩ gate–GND. Dettagli e designatori nella sezione "Designatori sul foglio EasyEDA" in fondo.
+- Pilotaggio: GPIO → R50/R60 1 kΩ → gate; R49/R59 47 kΩ gate–GND. **Su ESP32-C6-Zero (2026-10-26): `CMD_INVERTER_CTRL/STATE` stanno su GP4/GP5, pin senza pull al reset.** Su un pin con weak pull-up (GP18…23, ≈ 45 kΩ) il gate salirebbe a ≈ 1,67 V, sopra la soglia del BSS138: K2 e K3 si eccitano al boot (remote scollegato e inverter acceso). `SIG_INVERTER_GREEN/RED` (GP6/GP20) sono attivi bassi con pull-up 12 kΩ: il weak pull-up interno è innocuo, ma si disattiva da firmware per non aumentare il carico del collettore (+27 %). [Verifica](../../hardware/schematic/a8_verifica_stato_reset.md). Dettagli e designatori nella sezione "Designatori sul foglio EasyEDA" in fondo.
 
 ## Piedinatura (Renogy Support, CASE2025080300065, 9 ago — Assumed)
 

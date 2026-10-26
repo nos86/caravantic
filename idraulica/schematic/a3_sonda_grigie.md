@@ -84,7 +84,7 @@ Corrente massima in eccitazione: 0,19 mA. Corrente in guasto 24 V sull'elettrodo
 2. **Cavo interrotto = "vuoto"**: lo stato "vuoto" non distingue sonda asciutta da filo staccato (non rilevabile con questo schema).
 3. **Sonda sporca/ossidata** (biofilm, calcare) può dare R_w bassa a serbatoio vuoto ⇒ falso "pieno"; l'ossidazione delle viti dà l'errore opposto (testimoniato su forum, fonte debole).
 4. R_w e il comportamento della sonda sono **ipotesi**: nessuna misura finora.
-5. Pin GPIO (ADC1 + uscita non strapping) **non ancora assegnati**.
+5. Pin GPIO: **`GRY_DRV` su GP15 del C6-Zero (pin senza pull al reset)**, assegnato il 2026-10-26 in `a8_mappa_pin.md`; la lettura `GRY_SNS` è sull'ADS1115 #2. Su un pin con weak pull-up (GP18…23) R34 100 kΩ darebbe ≈ 2,28 V sul nodo al reset e la sonda sarebbe eccitata in DC per tutto il boot: [verifica](../../hardware/schematic/a8_verifica_stato_reset.md).
 
 ## Rilettura dal vivo con il tool EasyEDA (2026-10-17)
 Dalle proprietà dei componenti sul foglio (la connettività non è verificabile via MCP: lo snapshot vede solo 49 pin e 17 fili su 152 componenti):

@@ -40,24 +40,24 @@ Regola (vedi [pinout §4](../../hardware/schematic/a8_esp32_c6_zero_pinout.md)):
 | GP5 | sinistro | `OUT_VALVE_CLOSE` | sicuro (MTDI, idem) |
 | GP7 | retro | `OUT_LINEAR_MOTOR_DIR` | sicuro; pull-down passivo sul gate |
 | GP14 | destro | `OUT_LINEAR_MOTOR_ENA` | sicuro; pull-down passivo sul gate |
-| GP15 | destro | **libero, pin sicuro di scorta** | strapping JTAG ignorato con eFuse di fabbrica |
+| GP15 | destro | `WASTE_TANK_CMD` (= `GRY_DRV`) | sicuro (strapping JTAG ignorato con eFuse di fabbrica); **spostato qui il 2026-10-26**: su un pin con weak pull-up la sonda grigie sarebbe eccitata a ≈ 2,28 V al boot ([verifica](../../hardware/schematic/a8_verifica_stato_reset.md)) |
 | GP6 | retro | libero (weak pull-up) | MTCK |
 | GP16 (TX) | destro | GPS TX | uscita alta dopo il reset (idle UART); la ROM stampa i log di boot qui |
 | GP17 (RX) | destro | GPS RX | |
 | GP18 | destro | SDA | pull-up 2,2 kΩ esterno (vedi vecchia a8 §2.4), 100 kHz iniziali |
 | GP19 | destro | SCL | |
 | GP20 | destro | `OW` (1-Wire) | pull-up esterno |
-| GP21 | destro | `CLEAN_TANK_CMD` (= `LVL_EN`) | **su pin con weak pull-up**: durante il boot l'eccitazione del livello può essere accesa; accettabile (misura, 4–10 mA, poche centinaia di ms) oppure pull-down ≤ 4,7 kΩ; da verificare sul foglio a4 la polarità del pilota |
-| GP22 | destro | `WASTE_TANK_CMD` (= `GRY_DRV`) | idem, foglio a3 (eccitazione continua della sonda per qualche centinaio di ms al boot: corrosione trascurabile, da confermare) |
+| GP21 | destro | `CLEAN_TANK_CMD` (= `LVL_EN`) | **unica uscita su pin con weak pull-up**: con R39 = 100 kΩ il nodo sale a ≈ 2,28 V al boot, ≈ 3,5…5,5 mA nel sender (entro H2 ≤ 9,5 mA). Azzerabile con R39 ≤ 4,7 kΩ (≈ 0,3 V): vedi la [verifica](../../hardware/schematic/a8_verifica_stato_reset.md) |
+| GP22 | destro | **libero** | weak pull-up |
 | GP23 | retro | `SIG_AUX2` | ingresso opto con pull-up a 3V3: il weak pull-up è innocuo |
 | GP8, GP9, GP12, GP13 | — | non usati | LED, BOOT, USB |
 
-**Bilancio:** 16 segnali su 18 pin disponibili. **10 uscite**: 9 sui pin sicuri più 2 (`CLEAN_TANK_CMD`, `WASTE_TANK_CMD`) sui pin con weak pull-up, scelte perché un'accensione al boot è innocua; **valvola, pistone e i 4 relè sono tutti su pin sicuri**. Margine: **GP15** (sicuro) e **GP6**.
+**Bilancio:** 16 segnali su 18 pin disponibili. **10 uscite**: 9 sui pin sicuri e 1 (`CLEAN_TANK_CMD`) su pin con weak pull-up; **valvola, pistone, 4 relè e sonda grigie sono su pin sicuri**. Margine: **GP6 e GP22** (entrambi con weak pull-up); nessun pin sicuro di scorta.
 
 ## 4. Aperti
 
-- Polarità e rete di pull-down dei piloti `CLEAN_TANK_CMD` e `WASTE_TANK_CMD` (fogli a4 e a3): accettare l'accensione al boot o aggiungere pull-down ≤ 4,7 kΩ.
-- Eventuale pull-up/pull-down sulla scheda Waveshare sui pin esposti: schema non letto, misurare sul modulo reale.
+- `CLEAN_TANK_CMD` su GP21: decidere se accettare ≈ 3,5…5,5 mA nel sender al boot o portare R39 a ≤ 4,7 kΩ (OPEN-15: corrente massima del sender non nota).
+- Schema Waveshare letto: nessun componente sui pin usati (vedi pinout §1.1); controllo con multimetro sul modulo reale consigliato.
 - Verifica delle eFuse di fabbrica (`espefuse summary`): GP15 libero solo se EFUSE_JTAG_SEL_ENABLE = 0.
 - I²C: bus unico con 4 dispositivi (LSM6DSOX 0x6A, MMC5983MA 0x30, INA219 0x40, ADS1115 0x49), indirizzi liberi dopo lo spostamento di U_SH (0x48) sull'elettrica.
 - Il magnetometro e il suo cavo vanno lontano dai relè `DO1…4` e dal motore: vincoli di layout in a7.
