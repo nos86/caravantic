@@ -103,7 +103,7 @@ MPN riletti: **R7 = `LR2512-22R005F4`** (corretto); K1 `RTE24012`; Q2 `IPD50N06S
 
 Non verificabile da schematico: pin-out fisico di K1 (12 = NC, 14 = NO) e quote dei pad dei footprint.
 
-## U_EX1, U_EX2 (expander I/O, A8) — Microchip MCP23017 (SSOP-28 `-E/SS` o SOIC-28 `-E/SO`)
+## U_EX1, U_EX2 (expander I/O, A8) — **NON PIÙ NECESSARI (proposta 2026-10-26: ESP32-C6-Zero e due schede, mappa a8 senza expander; da confermare)** — Microchip MCP23017 (SSOP-28 `-E/SS` o SOIC-28 `-E/SO`)
 - Requisiti: REQ-IF-012 (Assumed: RESET con pull-down passivo e rilascio da firmware, uscite sicure al reset), REQ-SW-002 (stato sicuro), REQ-EL-006 (ingressi ≤ 100 ms, polling). 21 linee → 2 esemplari da 16 bit (32 linee, 11 di scorta). Stato: **Congelato** (2026-10-23, conferma utente; package scelto: **SOIC-28 `MCP23017-E/SO`, LCSC C47023**). Famiglia scelta da me (non da un confronto a tappeto): le alternative comuni PCA9535/TCA9535/TCA9555 non hanno il pin RESET; riserva: NXP PCAL6416A (non verificata).
 - Verifica `datasheet-verifier` del 2026-10-23 su **DS20001952C (luglio 2016)**, letto tramite una conversione automatica del PDF (r.jina.ai), non dal PDF diretto: **da ricontrollare a vista prima di congelare**; **mono-fonte** (seconde fonti solo forum).
 - Parametri decisivi (DS20001952C, Tab. 1-1, 1-2, 1-3, Tab. 2-1, sez. 3.0):
