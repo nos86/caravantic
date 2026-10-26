@@ -19,9 +19,9 @@ Il progetto è diviso in **due schede** (Confirmed). Specifiche e dettagli di im
 | Scheda | Cartella | Perimetro | REQ assegnati (Assumed) |
 |---|---|---|---|
 | Idraulica | [`idraulica/`](../idraulica/frd.md) | acque chiare, acque grigie, pompa, motori | EL-003, EL-004, EL-005, IF-001, IF-002, IF-003, IF-004, IF-009, IF-011 |
-| Elettrica | [`elettrica/`](../elettrica/frd.md) | shunt, inverter, relè globale | IF-005, IF-007, IF-008, IF-010 |
+| Elettrica | [`elettrica/`](../elettrica/frd.md) | shunt, inverter, relè globale | IF-005, IF-007, IF-008, IF-010, EL-006, EL-008, EL-009 |
 
-**Assegnati il 2026-10-26 (Confirmed):** IF-001 (IMU/magnetometro) e IF-002 (GPS) → idraulica; IF-010 (RS485, Assumed) → elettrica. **Replicati su entrambe:** EL-001, EL-002. **Non ancora assegnati:** EL-006/008/009 (ingressi opto), EL-007, ENV-001. Rimosso: IF-012. Cambiato: SW-001 (ESP32-C6-Zero, Zigbee). Mappa pin (a8) e ingressi (a1) in `hardware/schematic/` **da rifare** (OPEN-17).
+**Assegnati il 2026-10-26 (Confirmed):** IF-001 (IMU/magnetometro) e IF-002 (GPS) → idraulica; IF-010 (RS485, Assumed) → elettrica. **Replicati su entrambe:** EL-001, EL-002. **Non ancora assegnati:** EL-007 e ENV-001 (valgono per entrambe). Ingressi: EL-006/008/009 → elettrica (IN-AUX2 sull'idraulica). Rimosso: IF-012. Cambiato: SW-001 (ESP32-C6-Zero, Zigbee). Mappa pin (a8) e ingressi (a1) in `hardware/schematic/` **da rifare** (OPEN-17).
 
 ## 2. Requisiti
 
@@ -37,43 +37,6 @@ Stato: Confirmed = dichiarato dall'utente · Assumed = ipotesi da confermare · 
 
 
 
-
-**REQ-EL-006** (Must, Confirmed) — 2 ingressi digitali 12 V **opto-isolati**:
-- **IN-CAB** (stato cabina): +15 sotto chiave del Ducato (Confirmed), **derivato dalla radio con un cavo da 0,5 mm²** (Confirmed, utente 2026-10-08). Campo nominale **11,5–13,8 V** (Confirmed). Assorbimento non vincolante.
-- **IN-CEL** (stato cellula): uscita della centralina cellula (Confirmed). Si assume high-side: **+V_batt LFP a cellula accesa**, flottante o 0 V a cellula spenta (Assumed, OPEN-12). Campo nominale **12,8–14,4 V** (Confirmed). Assorbimento a cellula attiva: **circa 1 mA accettato** (Confirmed, utente 2026-10-08); nessuno strobe.
-- Optoaccoppiatore: **Toshiba TLP293, rango GB** (Confirmed, scelta utente 2026-10-08; sostituisce il PC817 scelto il 2026-10-05).
-- Ritorno del LED dell'opto sulla **massa della board**, senza morsetto di ritorno dedicato (Confirmed). L'opto non protegge quindi da offset di massa fra sorgente e board: ne serve solo la robustezza ai fault.
-
-Prescrizioni:
-- Isolamento galvanico con optoaccoppiatore *shall* (Confirmed, scelta utente).
-- Soglie: attivo ≥ 8 V, inattivo ≤ 2 V (Assumed, valori ereditati da rev. 1).
-- Tempo di risposta ≤ 100 ms (Confirmed). Il filtro può essere dimensionato fino a questo limite.
-- Corrente assorbita da IN-CEL a cellula attiva: circa 1 mA (Confirmed, 2026-10-08; sostituisce il limite Assumed di 0,1 mA). In progetto 1,0 mA a 12,8 V e 1,2–1,25 mA a 14,4 V (simulato). IN-CAB: nessun limite.
-- Immunità ai transitori: REQ-EL-008.
-
-*Acceptance:* [B] lettura corretta fra 10 e 16 V in ingresso e 0 V letto come inattivo, su entrambi i canali; [B] 24 V continui per 5 min senza danno; [B] −16 V continui per 5 min senza danno; [B] il fronte in ingresso compare sul GPIO entro 100 ms; [B] corrente di IN-CEL a 14,4 V ≤ 1,5 mA (Assumed).
-
-**REQ-EL-009** (Must, Confirmed) — 2 ingressi digitali generici di riserva **IN-AUX1, IN-AUX2**, opto-isolati, **configurabili per canale con jumper a saldare** (Confirmed, utente 2026-10-15):
-- **Modo H, attivo a 12 V:** come REQ-EL-006. Attivo con ingresso ≥ 8 V; inattivo con ingresso ≤ 2 V o aperto.
-- **Modo L, attivo a massa:** la catena del LED è alimentata dal **+12 V batteria protetto della board** (Confirmed) e l'ingresso la chiude verso massa (contatto pulito o open-collector). Attivo con ingresso ≤ 2 V verso massa; inattivo con ingresso aperto o ≥ V_board − 2 V (Assumed).
-- I jumper escono dalla fabbrica **aperti**: il canale non funziona finché non viene configurato (Confirmed). Una configurazione errata *shall* non danneggiare nulla.
-- Stessa rete e stesso optoaccoppiatore di REQ-EL-006 (TLP293 GB, ritorno su massa della board), tempo di risposta ≤ 100 ms.
-- Corrente assorbita a ingresso attivo ≤ 1,5 mA per canale, in entrambi i modi (Confirmed). Nel modo L è prelevata dalla batteria servizi.
-- Immunità ai transitori: REQ-EL-008, applicato in entrambi i modi (uso generico, quindi caso peggiore lato alternatore).
-
-*Rationale:* ingressi di riserva per segnali non ancora noti, che possono arrivare da sorgenti high-side o da contatti verso massa.
-*Acceptance:* [B] per ogni modo e su entrambi i canali, lettura corretta con la board alimentata a 10,0 V e a 14,6 V; [B] modo L: lettura "attivo" con un contatto da 1 kΩ verso massa; [B] modo H: 24 V e −16 V continui per 5 min senza danno; modo L: ingresso a +24 V e a −16 V per 5 min senza danno; [B] configurazioni errate (entrambi i jumper verso IN, oppure verso +12 V e GND) per 5 min senza danno; [B] corrente a ingresso attivo ≤ 1,5 mA con la board a 14,6 V.
-
-**REQ-EL-008** (Must, Assumed) — Gli ingressi IN-CAB, IN-CEL (e IN-AUX1/2, vedi REQ-EL-009) *shall* sopravvivere senza danno, con ripristino automatico della lettura, ai transitori dell'impianto 12 V del veicolo:
-- **load dump ISO 16750-2 Test A (non soppresso)**, sistema 12 V: U_s 79–101 V, R_i 0,5–4 Ω, t_d 40–400 ms;
-- **ISO 7637-2 impulso 1**: U_s fino a −150 V, R_i 10 Ω, t_d 2 ms;
-- **ISO 7637-2 impulso 2a**: U_s fino a +112 V, R_i 2 Ω, t_d 0,05 ms;
-- **ISO 7637-2 impulsi 3a/3b** (burst ns): R_i 50 Ω, livelli da verificare.
-
-*Rationale:* IN-CAB è sul +15 lato alternatore. Non è noto se l'X244 abbia una soppressione centralizzata del load dump: si assume il caso non soppresso (Test A). Su un ingresso di segnale ad alta impedenza costa poco.
-*Fonti:* il testo delle norme non è stato consultato. Valori da application note dei costruttori, fonti secondarie: [MCC AN0005](https://solutions.mccsemi.com/news/application-note-quick-guide-on-automotive-load-dump-protection-iso-16750-2) e [TI SNOAAA1](https://ti.com/document-viewer/lit/html/SNOAAA1) (load dump); [TI SNOAA13](https://ti.com/lit/pdf/snoaa13) tab. 1, 2, 4 (R_i e t_d degli impulsi 1, 2a, 3a); [TI e2e, ISO 7637-2](https://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/196/iso_5F00_7637_5F00_2.pdf) (range di U_s).
-*Acceptance:* [D] analisi per impulso: corrente e energia su ogni componente del percorso d'ingresso entro i limiti del datasheet (impulsivi per resistori e diodi). Nessun generatore ISO disponibile al banco.
-*Rischio accettato (utente, 2026-10-08):* il resistore serie R1 è un **0805**. Nel load dump Test A (101 V, 400 ms) dissipa circa 1,1 W (174 mJ), 9 volte la potenza nominale standard di un CRCW0805 (0,125 W; il datasheet Vishay prova il sovraccarico a 2,5× per 5 s). La tenuta al load dump **non è dimostrabile** con un 0805; se si rompe il canale legge "inattivo". Gli altri impulsi (1, 2a, 3a/3b) vanno ancora verificati sulle curve di impulso del resistore (non lette). Il load dump potrebbe non arrivare al nodo se l'alternatore dell'X244 ha una soppressione integrata (non verificato).
 
 **REQ-EL-007** (Should, Open) — Consumo a riposo: da definire. La board resta alimentata a camper fermo? (OPEN-08)
 
@@ -108,10 +71,9 @@ Prescrizioni:
 | ~~OPEN-09~~ | Chiuso: ESP32-S3-Tiny | SW-001 |
 | ~~OPEN-10~~ | Chiuso 2026-10-22: assetto ≤ 1°, heading ≤ 5° | IF-001 |
 | OPEN-11 | Corrente da erogare agli slave RS485 su +12 V | IF-010 |
-| OPEN-12 | Uscita "stato cellula" della centralina: modello della centralina, tipo di uscita (high-side 12 V / open-collector / contatto), livelli a cellula ON e OFF | EL-006 |
 | ~~OPEN-16~~ | Chiuso 2026-10-26: Ethernet rimosso (IF-012 Won't). Mappa pin ed expander da rifare per scheda su ESP32-C6-Zero (vedi OPEN-17) | IF-012 |
 
-| OPEN-17 | **[Ridotto 2026-10-26]** Decisi: un ESP32-C6-Zero per scheda, Zigbee primario/Wi-Fi OTA, nessun link diretto, alimentazioni indipendenti, IMU+GPS sull'idraulica, RS485 sull'elettrica. Restano: assegnazione degli ingressi opto IN-CAB/IN-CEL/IN-AUX (EL-006/008/009) e di EL-007; massa e cavo di alimentazione fra le schede; mappa pin per scheda (a8 è per S3 + expander, **superata**); se gli expander I²C servono ancora | EL-006, EL-007 |
+| OPEN-17 | **[Ridotto 2026-10-26]** Decisi: un ESP32-C6-Zero per scheda, Zigbee primario/Wi-Fi OTA, nessun link diretto, alimentazioni indipendenti, IMU+GPS sull'idraulica, RS485 e IN-CAB/IN-CEL/IN-AUX1 sull'elettrica, IN-AUX2 sull'idraulica. Restano: EL-007 (consumo a riposo, per scheda); massa e cavo di alimentazione fra le schede; mappa pin per scheda (a8 **superata**); se gli expander I²C servono ancora | EL-007 |
 
 _I punti aperti specifici di scheda sono in `idraulica/frd.md` e `elettrica/frd.md`._
 
@@ -175,3 +137,4 @@ _I punti aperti specifici di scheda sono in `idraulica/frd.md` e `elettrica/frd.
 | 2026-10-23 | IF-012 (c): bus I²C unico per expander e sensori, rischio accettato; verifica in a8 §2.4: pull-up 2,2 kΩ (non 4,7 kΩ), 100 kHz iniziali, arresto/recupero via `EXP_RESET` | Decisione utente |
 | 2026-10-26 | Progetto diviso in due PCB: idraulica (chiare, grigie, pompa, motori) ed elettrica (shunt, inverter, relè globale). Requisiti, componenti, schemi e simulazioni spostati in `idraulica/` ed `elettrica/`; il comune resta in `docs/` e `hardware/`. Nuovi: pompa (NEW-1), relè globale (NEW-2), OPEN-17 | Decisione utente |
 | 2026-10-26 | Un ESP32-C6-Zero per scheda (sostituisce S3-Tiny), Zigbee primario + Wi-Fi OTA, nessun link fra le schede, alimentazioni indipendenti; IMU e GPS → idraulica, RS485 → elettrica; IF-012 Ethernet rimosso (OPEN-16 chiuso); OPEN-17 ridotto | Decisione utente; verifica docs ESPHome |
+| 2026-10-26 | Ingressi opto: IN-CAB, IN-CEL, IN-AUX1 → elettrica; IN-AUX2 → idraulica (EL-006/008/009 spostati); foglio a1 e simulazione in `elettrica/`; OPEN-12 → elettrica | Decisione utente |

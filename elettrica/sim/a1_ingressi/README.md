@@ -1,6 +1,6 @@
 # A1 — Ingressi digitali IN-CAB / IN-CEL: dimensionamento e verifica SPICE
 
-Requisiti: REQ-EL-006, REQ-EL-008 (`docs/frd.md`). Simulatore: ngspice-47. Rigenerare con `python sim_a1.py GB` o `python sim_a1.py NONGB [R_S_k R_PU_k]` (scrive `out/results_<tag>.json`, `out/01_dc_<tag>.png`, `out/02_gradino_<tag>.png`). La variabile d'ambiente `A1_TOPO` seleziona la topologia: `noD1` (default), `series`, `shunt`, `shunt_noD2`. `explore.py` ripete la scelta di R_S e R_PU; `fit_opto.py` tara velocità e saturazione del modello dell'opto.
+Requisiti: REQ-EL-006, REQ-EL-008 (`elettrica/frd.md`). Simulatore: ngspice-47. Rigenerare con `python sim_a1.py GB` o `python sim_a1.py NONGB [R_S_k R_PU_k]` (scrive `out/results_<tag>.json`, `out/01_dc_<tag>.png`, `out/02_gradino_<tag>.png`). La variabile d'ambiente `A1_TOPO` seleziona la topologia: `noD1` (default), `series`, `shunt`, `shunt_noD2`. `explore.py` ripete la scelta di R_S e R_PU; `fit_opto.py` tara velocità e saturazione del modello dell'opto.
 
 ## Circuito (per canale; i due canali sono identici; LED in continuo, nessuno strobe)
 

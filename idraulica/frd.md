@@ -21,6 +21,8 @@ Stato: Confirmed = dichiarato dall'utente · Assumed = ipotesi da confermare · 
 
 **REQ-EL-005** (Must, Confirmed/Open) — **4 uscite a relè generiche, contatto N.O.** (Confirmed, utente 2026-10-14), non più dedicate alla sola telecamera scarico grigie (primo carico previsto). Portata contatti e tipo di carichi per canale da definire (OPEN-13); se ≤ 2 A riuso dello stadio relè rev. 1 (IM06 + BSS138), replicato ×4.
 
+**Ingresso IN-AUX2** (REQ-EL-009 e REQ-EL-008, definiti in [`../elettrica/frd.md`](../elettrica/frd.md)): copia del circuito IN-AUX1, sulla scheda idraulica.
+
 ### 1.2 Interfaccia / protocollo
 
 **REQ-IF-001** (Must, Confirmed) — IMU accelerometro + magnetometro su I²C, con driver **ESPHome nativo** (vincolo, Confirmed 2026-10-22). Precisione richiesta (Confirmed, utente 2026-10-22): **assetto (roll/pitch) ≤ 1°; heading del camper ≤ 5°**.
