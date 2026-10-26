@@ -1,6 +1,6 @@
 # Schematico A1 — Ingressi digitali IN-CAB / IN-CEL (specifica di disegno)
 
-Requisiti: REQ-EL-006, REQ-EL-008, REQ-EL-009. Dimensionamento e verifica: [`../sim/a1_ingressi/README.md`](../sim/a1_ingressi/README.md). Registro componenti: [`../../docs/components.md`](../../docs/components.md).
+Requisiti: REQ-EL-006, REQ-EL-008, REQ-EL-009. Dimensionamento e verifica: [`../sim/a1_ingressi/README.md`](../sim/a1_ingressi/README.md). Registro componenti: [`../components.md`](../components.md).
 
 Rev. 2026-10-08 (3): opto **Toshiba TLP293 rango GB**, LED in conduzione continua (assorbimento di circa 1 mA a cellula attiva accettato dall'utente), **senza D1 in serie**: la protezione inversa è fatta dal diodo antiparallelo al LED e dallo Zener in diretta. **5 componenti per canale.** Allineata al foglio EasyEDA "Optoisolated inputs" (designatori del canale IN-CAB).
 
