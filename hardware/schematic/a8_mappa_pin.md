@@ -54,7 +54,7 @@ Rev. 2026-10-23 (richiesta utente): i tre ingressi analogici `IN_VALVE_SENSE`, `
 | Net | N. | Foglio |
 |---|---|---|
 | `OUT_VALVE_OPEN`, `OUT_VALVE_CLOSE` | 2 | a2 |
-| Pistone: bobine K1, K2 + ENA (topologia **Assumed**, `docs/components.md`) | 3 | EL-004 |
+| Pistone: bobine K1, K2 + ENA (topologia **Assumed**, `idraulica/components.md`) | 3 | EL-004 |
 | 4 relè generici | 4 | EL-005 (OPEN-13) |
 | `CMD_INVERTER_CTRL`, `CMD_INVERTER_STATE` | 2 | a6 |
 | `LVL_EN` | 1 | a4 |
@@ -73,7 +73,7 @@ Assegnazione **letta dalla netlist EasyEDA del 2026-10-23** (non dai documenti).
 
 - U_SH (ADS1115 #1, shunt energetici) usa tutti e 4 gli ingressi in A0_A1 / A2_A3 differenziale: serve un **secondo dispositivo**, non un canale in più. Indirizzi: U_SH 0x48 (ADDR a GND), U_AD2 0x49 (ADDR a VDD); da controllare l'assenza di conflitti con IMU, magnetometro e INA219 sullo stesso bus.
 - **Bus: unico (Confirmed, utente 2026-10-23).** U_AD2 sta sullo stesso bus di IMU, magnetometro, INA219, U_SH **e degli expander** (l'utente ha accettato il rischio del bus singolo; il punto (c) di IF-012 è superato). Rischio accettato dall'utente: un blocco del bus lascia valvola e pistone pilotati dagli expander ma senza misura di corrente, quindi senza la soglia 7 A / 200 ms (EL-004); è un guasto singolo, protetto solo da finecorsa/arresti meccanici. Mitigazione firmware da definire (non fatta): se la lettura di corrente manca o è scaduta, il firmware porta a riposo le uscite pistone/valvola e non le riattiva.
-- Impatti da verificare, non fatti qui: (1) latenza: 860 SPS ≈ 1,2 ms per conversione, più il polling ESPHome, contro 200 ms del pistone; (2) `GRY_SNS`: la lettura va sincronizzata col finestra di 10 ms di `GRY_DRV` (firmware, `GRY_DRV` è su expander); (3) impedenza di sorgente del partitore a3 contro Z d'ingresso dell'ADS1115 al FSR scelto (datasheet SBAS444E, FSR ±4,096 V o ±2,048 V: 2,45 V richiede ±4,096 V); (4) il datasheet ADS1115 è stato verificato mono-fonte (`docs/components.md`, U_SH).
+- Impatti da verificare, non fatti qui: (1) latenza: 860 SPS ≈ 1,2 ms per conversione, più il polling ESPHome, contro 200 ms del pistone; (2) `GRY_SNS`: la lettura va sincronizzata col finestra di 10 ms di `GRY_DRV` (firmware, `GRY_DRV` è su expander); (3) impedenza di sorgente del partitore a3 contro Z d'ingresso dell'ADS1115 al FSR scelto (datasheet SBAS444E, FSR ±4,096 V o ±2,048 V: 2,45 V richiede ±4,096 V); (4) il datasheet ADS1115 è stato verificato mono-fonte (`idraulica/components.md`, U_SH).
 
 ### 2.4 Verifica del bus unico (2026-10-23)
 
@@ -92,7 +92,7 @@ Dispositivi: 2 expander (famiglia da scegliere), LSM6DSOX 0x6A, MMC5983MA 0x30, 
 **Cosa serve per essere robusti (proposta, Assumed):**
 1. Pull-up **2,2 kΩ** (non 4,7 kΩ) e, finché la capacità non è misurata, firmware a **100 kHz**; salire a 400 kHz solo dopo misura del fronte di salita sulla scheda (≤ 300 ns).
 2. Il bus non ha un reset hardware per i sensori: ADS1115 e MMC5983 non hanno pin RESET; l'INA219 azzera l'interfaccia dopo 28 ms con linee basse (SBOS448G §7.5); per l'LSM6DSOX c'è la segnalazione di un forum ST di sensore che ignora il SW_RESET dopo traffico anomalo (debole). L'ADS1115 risponde al general call reset (0x00 0x06) ma solo a bus funzionante.
-3. **Rilevamento e arresto indipendenti dal bus:** il firmware conta le transazioni fallite o scadute; superata la soglia, **impulsa `EXP_RESET`** (GPIO nativo, non dipende dal bus) per portare a riposo valvola, pistone e relè, poi esegue il recupero del bus (9 impulsi su SCL, STOP) e riprende. Così un blocco in marcia del pistone **ferma** il pistone, non lo lascia senza protezione. Expander: **MCP23017-E/SO ×2 (Congelato, utente 2026-10-23)**, `docs/components.md` U_EX1/U_EX2. Il datasheet garantisce le uscite in alta impedenza entro 1 µs dal RESET basso, ma non dice se il RESET riporta a default i registri né se ripristina la macchina a stati I²C: dopo ogni reset il firmware riscrive tutti i registri e il bus si recupera col bus-clear, non col pin RESET. Effetto collaterale già accettato: il reset resetta anche il W5500.
+3. **Rilevamento e arresto indipendenti dal bus:** il firmware conta le transazioni fallite o scadute; superata la soglia, **impulsa `EXP_RESET`** (GPIO nativo, non dipende dal bus) per portare a riposo valvola, pistone e relè, poi esegue il recupero del bus (9 impulsi su SCL, STOP) e riprende. Così un blocco in marcia del pistone **ferma** il pistone, non lo lascia senza protezione. Expander: **MCP23017-E/SO ×2 (Congelato, utente 2026-10-23)**, `idraulica/components.md` U_EX1/U_EX2. Il datasheet garantisce le uscite in alta impedenza entro 1 µs dal RESET basso, ma non dice se il RESET riporta a default i registri né se ripristina la macchina a stati I²C: dopo ogni reset il firmware riscrive tutti i registri e il bus si recupera col bus-clear, non col pin RESET. Effetto collaterale già accettato: il reset resetta anche il W5500.
 4. Non spegnere i sensori per ripristinarli (nessun power-cycle): un chip senza alimentazione potrebbe caricare SDA/SCL; per l'ADS1115 con VDD = 0 V il datasheet non dice nulla (non verificabile).
 5. Layout: tracce SDA/SCL corte e lontane dai relè e dalle bobine; magnetometro con i vincoli di a7.
 

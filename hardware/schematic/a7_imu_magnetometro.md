@@ -18,7 +18,7 @@ Requisiti: REQ-IF-001 (assetto ≤ 1°, heading ≤ 5°, driver ESPHome nativo; 
 |---|---|---|
 | U23 LSM6DSOX, SA0 → GND | **0x6A** | datasheet ST DS12814 (LSM6DSOX) Rev 3, gennaio 2019, sezione I²C (SAD = 110101x; D4h/D5h con SA0 = 0, D6h/D7h con SA0 = 1 secondo la tabella degli indirizzi) |
 | U22 MMC5983MA | **0x30** | datasheet MEMSIC Rev A, p. 17 |
-| U_LVL INA219 (A4) | 0x40 | già registrato in `docs/components.md` |
+| U_LVL INA219 (A4) | 0x40 | già registrato in `idraulica/components.md` |
 
 Nessun conflitto. Il default del driver ESPHome `lsm6ds` è 0x6A.
 

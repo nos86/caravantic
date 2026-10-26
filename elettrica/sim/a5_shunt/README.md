@@ -1,6 +1,6 @@
 # A5 — Simulazione della rete di ingresso ADS1115 per gli shunt energetici
 
-Requisito: REQ-IF-005 (`docs/frd.md`). Specifica e commento dei risultati: [`../../schematic/a5_shunt_energia.md`](../../schematic/a5_shunt_energia.md).
+Requisito: REQ-IF-005 (`elettrica/frd.md`). Specifica e commento dei risultati: [`../../schematic/a5_shunt_energia.md`](../../schematic/a5_shunt_energia.md).
 
 Esecuzione, da questa cartella: `py -3 sim_a5.py` (ngspice in `C:\Program Files (x86)\Spice64`, numpy e matplotlib). Non usare `-I`: `packaging` sta nel site-packages utente. Produce `out/results.json`, `out/01_dc.png`, `out/02_montecarlo.png`, `out/03_ac.png`. Durata circa 20 s.
 

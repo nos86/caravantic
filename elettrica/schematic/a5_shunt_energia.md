@@ -1,6 +1,6 @@
 # Schematico A5 — Misura dei due shunt energetici (specifica di disegno)
 
-Requisiti: REQ-IF-005 (Confirmed; precisione 1 % e risoluzione 0,1 A ancora **Assumed**, OPEN-06). Componenti: ADS1115, BAV199, R/C della rete di ingresso (vedi [`../../docs/components.md`](../../docs/components.md), sezione A5). Stato: **rev. 2026-10-18, R_S = 10 kΩ / R_B = 150 kΩ (scelta utente, decisa il 2026-10-17 come 10 k/143 k; il 143 k non è in stock su LCSC e si è passati a 150 k); simulata con ngspice (sezione in fondo, [`../sim/a5_shunt/`](../sim/a5_shunt/)). Foglio EasyEDA non ancora disegnato**: il server MCP `easyeda-pro` non si è connesso in questa sessione, quindi lo schema è dato come netlist qui sotto, da riportare sul foglio.
+Requisiti: REQ-IF-005 (Confirmed; precisione 1 % e risoluzione 0,1 A ancora **Assumed**, OPEN-06). Componenti: ADS1115, BAV199, R/C della rete di ingresso (vedi [`../components.md`](../components.md), sezione A5). Stato: **rev. 2026-10-18, R_S = 10 kΩ / R_B = 150 kΩ (scelta utente, decisa il 2026-10-17 come 10 k/143 k; il 143 k non è in stock su LCSC e si è passati a 150 k); simulata con ngspice (sezione in fondo, [`../sim/a5_shunt/`](../sim/a5_shunt/)). Foglio EasyEDA non ancora disegnato**: il server MCP `easyeda-pro` non si è connesso in questa sessione, quindi lo schema è dato come netlist qui sotto, da riportare sul foglio.
 
 Prescrizione di cablaggio (IF-005, Confirmed 2026-10-17): la massa della board è collegata al **lato batteria dello shunt in un solo punto**, con conduttore dedicato; obiettivo di offset di massa ≤ ±50 mV (da misurare).
 
@@ -83,7 +83,7 @@ Per BAV199: pin 3 al nodo d'ingresso, pin 1 a GND, pin 2 a +3V3. Pinout VSSOP-10
 
 ## Esiti della simulazione (ngspice, 2026-10-18, variante adottata `A5_VARIANT=10k150`)
 
-Script `hardware/sim/a5_shunt/sim_a5.py`, risultati in `out_10k150/results.json` e tre PNG. **Modelli generici, non dei costruttori**: diodo tipo 1N4148 per BAV199 e per i diodi ESD interni dell'ADS1115; l'ADC è solo un carico (710 kΩ differenziale, 100 MΩ di modo comune); perdite dei clamp iniettate come 0–5 nA; nessun rumore dell'ADC, nessuna temperatura, rail 3,3 V ideale. Offset e guadagno propri dell'ADS1115 **non** sono nel modello.
+Script `elettrica/sim/a5_shunt/sim_a5.py`, risultati in `out_10k150/results.json` e tre PNG. **Modelli generici, non dei costruttori**: diodo tipo 1N4148 per BAV199 e per i diodi ESD interni dell'ADS1115; l'ADC è solo un carico (710 kΩ differenziale, 100 MΩ di modo comune); perdite dei clamp iniettate come 0–5 nA; nessun rumore dell'ADC, nessuna temperatura, rail 3,3 V ideale. Offset e guadagno propri dell'ADS1115 **non** sono nel modello.
 
 | Prova | Esito |
 |---|---|

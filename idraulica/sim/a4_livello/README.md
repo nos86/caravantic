@@ -1,6 +1,6 @@
 # A4 — Generatore di corrente per il sender di livello: confronto topologie e dimensionamento
 
-Requisito: REQ-IF-003 (`docs/frd.md`). Simulatore: ngspice (stesso setup di A1). Eseguire da questa cartella: `python sim_a4.py S 68`, `python sim_a4.py M <Re1> <Re2> <Rref>`, `python explore_m.py`, `python final_m.py`, `python faults_m.py`.
+Requisito: REQ-IF-003 (`idraulica/frd.md`). Simulatore: ngspice (stesso setup di A1). Eseguire da questa cartella: `python sim_a4.py S 68`, `python sim_a4.py M <Re1> <Re2> <Rref>`, `python explore_m.py`, `python final_m.py`, `python faults_m.py`.
 
 **Limite dei modelli (leggere prima).** `models.lib` contiene un 1N4148WS generico (tarato per la sim A1) e un PNP **2N3906 con parametri SPICE generici, da memoria, non letti da un modello del costruttore**. I valori assoluti di corrente sono quindi indicativi; hanno valore i **confronti fra topologie** e gli ordini di grandezza. VOL del GPIO = 0,2 V: il datasheet ESP32-S3 v2.2 dà V_OL max 0,1·VDD (≈ 0,33 V) e I_OL 28 mA a 0,495 V (pad più forte): l'ipotesi è prudente. Il modello SPICE della coppia **non è** quello del costruttore (DMMT3906W): vedi `a4_serbatoio_chiare.md`.
 

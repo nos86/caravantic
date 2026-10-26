@@ -75,7 +75,7 @@ Eccitazione efficace Vexc = 3,3 V − caduta del GPIO − V_F di D_drv: **2,2…
 - **Pad `LVL_EN`:** ESPHome (solo framework esp-idf) espone `drive_strength` sui GPIO ESP32 con valori 5 / 10 / 20 / 40 mA, **default 20 mA** (documentazione ESPHome, pagina Pin Schema, letta via WebFetch). ESP-IDF non dà mA per i livelli (weak, stronger, medium = default, strongest) e avverte di non fidarsi del valore di reset. Il datasheet ESP32-S3 v2.2 specifica solo I_OH = 40 mA a V_OH ≥ 2,64 V con il pad più forte. La corrente richiesta è ≤ 9,5 mA: il default basta se la corrispondenza 20 mA = medium è corretta; se V_shunt a 190 Ω scendesse troppo, impostare `drive_strength: 40mA`. Da confermare al banco (leggere V_shunt a Rs = 0 e 190 Ω).
 - Calcolo: `I_sender = V_shunt/Rsh − I_bias(IN−) − V_bus/320 kΩ`, con `I_bias(IN−) ≈ 20 µA` tipico (valore massimo non riportato nella tabella letta); `Rs = V_bus / I_sender`. Poi mappa Rs → % con la taratura a 3 punti.
 
-### Errore atteso (dai limiti del datasheet, `hardware/sim/a4_livello/ina219_error.py`)
+### Errore atteso (dai limiti del datasheet, `idraulica/sim/a4_livello/ina219_error.py`)
 Su Rs, in % del fondo scala (190 Ω), senza taratura:
 
 | Grado | 25 °C, p95 / peggiore | −25…85 °C, p95 / peggiore |

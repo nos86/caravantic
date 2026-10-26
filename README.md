@@ -1,6 +1,6 @@
 # Caravantic Board — rev. 2
 
-Scheda singola di bordo per il camper (Fiat Ducato X244, 2005, 2.3 JTD — Marlin 65G), integrata in Home Assistant.
+Sistema di bordo (due PCB: idraulica ed elettrica) per il camper (Fiat Ducato X244, 2005, 2.3 JTD — Marlin 65G), integrata in Home Assistant.
 
 > Il progetto rev. 1 (IO-board multi-nodo CANopen) è archiviato in [`old/`](old/). Le parti riutilizzabili sono mappate in [`docs/frd.md`](docs/frd.md) §5.
 
@@ -24,8 +24,10 @@ Scheda singola di bordo per il camper (Fiat Ducato X244, 2005, 2.3 JTD — Marli
 
 | Cartella | Contenuto |
 |---|---|
-| `docs/` | Specifica funzionale (`frd.md`) e documenti di progetto |
-| `hardware/` | Schematico e PCB rev. 2 |
+| `idraulica/` | PCB idraulico (acque chiare/grigie, pompa, motori): requisiti, componenti, fogli, simulazioni |
+| `elettrica/` | PCB elettrico (shunt, inverter, relè globale): requisiti, componenti, fogli, simulazioni |
+| `docs/` | Specifica funzionale e registro componenti **comuni** |
+| `hardware/` | Parti comuni (ingressi, IMU, mappa pin), datasheet, progetto EasyEDA |
 | `firmware/` | Firmware rev. 2 |
 | `old/` | Progetto rev. 1 archiviato — solo consultazione |
 
