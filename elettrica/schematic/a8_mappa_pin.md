@@ -52,7 +52,7 @@ Regola (vedi [pinout §4](../../hardware/schematic/a8_esp32_c6_zero_pinout.md)):
 
 - NEW-2: senza funzione, tipo di bobina e corrente del relè globale i due pin riservati sono un'ipotesi; il comando richiede un pilota (corrente di bobina).
 - Verifica delle eFuse di fabbrica (`espefuse summary`): GP15 libero solo se EFUSE_JTAG_SEL_ENABLE = 0.
-- Eventuale pull-up/pull-down sulla scheda Waveshare sui pin esposti: schema non letto, misurare sul modulo reale.
+- Schema Waveshare letto: nessun componente sui pin usati (vedi pinout §1.1); controllo con multimetro sul modulo reale consigliato.
 - Le linee `SIG_INVERTER_GREEN/RED` open-drain su GPIO nativo: da provare al banco (con il weak pull-up interno di GP6 attivo).
 - IN-CAB/IN-CEL come wake da deep sleep: legato a OPEN-08, non deciso.
 - U_SH (ADS1115, 0x48): unico dispositivo I²C sulla scheda.

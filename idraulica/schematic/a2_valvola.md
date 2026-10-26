@@ -14,8 +14,8 @@ U.S. Solid 1/2", 9–24 V, 3 fili con finecorsa interni: **nero = −, rosso = a
 | Net | Direzione | Note |
 |---|---|---|
 | `Vmot` | alimentazione | linea attuatore, dopo il fusibile esterno; condivisa col pistone (9 A sommati: 7 A soglia + 2 A picco valvola): fusibile e P2 da dimensionare |
-| `OUT_VALVE_OPEN` | MCU → foglio | GPIO, attivo alto: apre (rosso) |
-| `OUT_VALVE_CLOSE` | MCU → foglio | GPIO, attivo alto: chiude (blu) |
+| `OUT_VALVE_OPEN` | MCU → foglio | GPIO, attivo alto: apre (rosso). **C6-Zero: GP4 (pin senza pull al reset)**; su un pin con weak pull-up il gate di Q3 salirebbe a ≈ 1,67 V e la valvola si muoverebbe al boot ([verifica](../../hardware/schematic/a8_verifica_stato_reset.md)) |
+| `OUT_VALVE_CLOSE` | MCU → foglio | GPIO, attivo alto: chiude (blu). **C6-Zero: GP5**, stesso vincolo |
 | `IN_VALVE_SENSE` | foglio → MCU | ADC, 0,9 V/A (18 mΩ × G 50), 2,25 V a 2,5 A |
 | `+5V`, `GND` | alimentazione | `+5V` per U5 |
 

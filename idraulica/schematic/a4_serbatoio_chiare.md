@@ -88,7 +88,7 @@ Con taratura a 3 punti resta la sola deriva termica. **Non incluso:** l'offset d
 ### Guasti
 - **24 V su J_LVL.1:** IN+ e IN− vanno a 24 V, entro il massimo assoluto di 26 V (−0,3…26 V, Tab. 7.1) con **2 V di margine**; D_drv (V_R 75 V) blocca il ritorno verso il GPIO. Il datasheet dice che la tensione di bus può essere presente a INA219 spento. **Non c'è più la rete Rp + clamp** della convenzione elettrica: è uno **scostamento da `caravantic-conventions`, accettato dall'utente il 2026-10-17 (Confirmed)**. La tenuta a 24 V poggia solo sul rating dell'INA219; rischio residuo: tensioni > 26 V o negative sul filo del sender.
 - **N a massa:** 9,5 mA massimi, V_shunt 37 mV, nessun clipping.
-- **Reset/MCU spento:** `LVL_EN` in alta impedenza (i GPIO generici non hanno pull al reset) e Rpd a massa: nessuna corrente nel sender. INA219 acceso o spento non cambia nulla.
+- **Reset/MCU spento:** `LVL_EN` in alta impedenza (i GPIO generici non hanno pull al reset) e Rpd a massa: nessuna corrente nel sender. **Valido per l'S3 e per i pin senza pull del C6-Zero (GP0…5, 7, 14, 15). Sul C6-Zero `LVL_EN` è su GP21, che ha un weak pull-up ≈ 45 kΩ al reset:** con Rpd 100 kΩ il nodo sale a ≈ 2,28 V e il sender riceve ≈ 3,5…5,5 mA per tutto il boot (entro H2, ≤ 9,5 mA; OPEN-15 non chiuso). Con Rpd ≤ 4,7 kΩ ≈ 0,3 V, nessuna corrente. Dettagli: [`a8_verifica_stato_reset.md`](../../hardware/schematic/a8_verifica_stato_reset.md). INA219 acceso o spento non cambia nulla.
 - **Bus I²C bloccato:** la lettura del livello manca ma nulla di pericoloso; firmware con timeout.
 
 ## B. Temperatura DS18B20 (1-Wire, 3 fili)
