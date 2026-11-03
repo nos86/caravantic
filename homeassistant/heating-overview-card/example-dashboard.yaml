@@ -1,0 +1,18 @@
+# 1) Copia heating-overview-card.js in /config/www/ (Home Assistant)
+# 2) Impostazioni > Dashboard > ⋮ > Risorse > aggiungi:
+#      URL:  /local/heating-overview-card.js   Tipo: Modulo JavaScript
+# 3) Aggiungi una card "Manuale" con questo YAML e sostituisci gli entity_id.
+type: custom:heating-overview-card
+title: Riscaldamento
+supply_temp: sensor.riscaldamento_mandata      # obbligatorio
+return_temp: sensor.riscaldamento_ritorno      # obbligatorio
+flow: sensor.riscaldamento_portata             # obbligatorio
+power: sensor.riscaldamento_potenza            # obbligatorio
+energy_24h: sensor.riscaldamento_energia_24h   # obbligatorio
+energy_season: sensor.riscaldamento_energia_stagione  # obbligatorio
+# Opzionali (valori di default mostrati)
+power_max: 3000        # fondo scala gauge, nell'unità del sensore potenza (3 se kW)
+active_threshold: 50   # soglia "in funzione", nell'unità del sensore potenza (0.05 se kW)
+temp_min: 20           # °C: colore "freddo" del circuito
+temp_max: 80           # °C: colore "caldo" del circuito
+history: true          # grafico potenza 24 h (usa il recorder di HA)
