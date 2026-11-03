@@ -47,12 +47,13 @@ class HeatingOverviewCard extends HTMLElement {
     for (const k of HOC_KEYS) if (!config[k]) throw new Error(`Parametro obbligatorio mancante: ${k}`);
     this._config = {
       title: 'Riscaldamento',
-      temp_min: 20,
+      temp_min: 0,
       temp_max: 80,
       history: true,
       ...config,
     };
     this._sig = '';
+    this._built = false;
     this._hist = null;
     this._histAt = 0;
     if (this._hass) this.hass = this._hass;
@@ -157,65 +158,9 @@ class HeatingOverviewCard extends HTMLElement {
     </svg>`;
   }
 
-  _render() {
-    const c = this._config, S = this._hass.states;
-    const loc = (this._hass.locale && this._hass.locale.language) || 'it';
-    const fmt = (v, d) => (Number.isFinite(v)
-      ? v.toLocaleString(loc, { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
-
-    const sup = hocNum(S[c.supply_temp]), ret = hocNum(S[c.return_temp]);
-    const flow = hocNum(S[c.flow]), pw = hocNum(S[c.power]);
-    const e24 = hocNum(S[c.energy_24h]), eS = hocNum(S[c.energy_season]);
-    const uT = hocUnit(S[c.supply_temp]) || '°C';
-    const uF = hocUnit(S[c.flow]), uP = hocUnit(S[c.power]);
-    const uE24 = hocUnit(S[c.energy_24h]), uES = hocUnit(S[c.energy_season]);
-    const dT = sup - ret;
-
-    const kW = uP === 'kW';
-    const pMax = c.power_max ?? (kW ? 3 : 3000);
-    const thr = c.active_threshold ?? (kW ? 0.05 : 50);
-    const active = Number.isFinite(pw) && pw > thr;
-
-    let st = { label: 'Spento', cls: 'off' };
-    if (!Number.isFinite(pw)) st = { label: 'Non disponibile', cls: 'na' };
-    else if (active && Number.isFinite(dT) && dT < 0) st = { label: 'Anomalia ΔT', cls: 'warn' };
-    else if (active) st = { label: 'In funzione', cls: 'on' };
-
-    const pct = Number.isFinite(pw) ? hocClamp(pw / pMax, 0, 1) * 100 : 0;
-    const gauge = `<svg viewBox="0 0 200 124" role="img" aria-label="Potenza termica">
-      <path d="M20 100A80 80 0 0 1 180 100" pathLength="100" class="g-track"/>
-      ${pct > 0.5 ? `<path d="M20 100A80 80 0 0 1 180 100" pathLength="100" class="g-val" stroke-dasharray="${pct.toFixed(2)} 100"/>` : ''}
-      <text x="100" y="88" text-anchor="middle" class="g-num">${fmt(pw, kW ? 2 : 0)}</text>
-      <text x="100" y="106" text-anchor="middle" class="g-unit">${hocEsc(uP)}</text>
-      <text x="20" y="120" text-anchor="middle" class="ax">0</text>
-      <text x="180" y="120" text-anchor="middle" class="ax">${fmt(pMax, kW ? 1 : 0)}</text>
-    </svg>`;
-
-    const cs = this._tempColor(sup), cr = this._tempColor(ret);
-    const loop = `<svg viewBox="0 0 320 156" role="img" aria-label="Circuito di riscaldamento">
-      <defs><linearGradient id="hcLoop" gradientUnits="userSpaceOnUse" x1="0" y1="38" x2="0" y2="118">
-        <stop offset="0" stop-color="${cs}"/><stop offset="1" stop-color="${cr}"/>
-      </linearGradient></defs>
-      <rect x="40" y="38" width="240" height="80" rx="16" fill="none" stroke="url(#hcLoop)" stroke-width="7"/>
-      ${active ? '<rect class="flowdash" x="40" y="38" width="240" height="80" rx="16" fill="none" pathLength="100" stroke-dasharray="1.2 2.8" stroke-width="2"/>' : ''}
-      <g data-e="supply_temp" class="tap">
-        <text x="160" y="16" text-anchor="middle" class="lbl">MANDATA</text>
-        <text x="160" y="31" text-anchor="middle" class="tv" fill="${cs}">${fmt(sup, 1)} ${hocEsc(uT)}</text>
-      </g>
-      <g data-e="return_temp" class="tap">
-        <text x="160" y="136" text-anchor="middle" class="lbl">RITORNO</text>
-        <text x="160" y="152" text-anchor="middle" class="tv" fill="${cr}">${fmt(ret, 1)} ${hocEsc(uT)}</text>
-      </g>
-      <text x="160" y="72" text-anchor="middle" class="lbl">ΔT</text>
-      <text x="160" y="92" text-anchor="middle" class="dt">${Number.isFinite(dT) ? fmt(dT, 1) : '—'} K</text>
-      <g data-e="flow" class="tap">
-        <text x="160" y="108" text-anchor="middle" class="fl">${fmt(flow, flow >= 100 ? 0 : 1)} ${hocEsc(uF)}</text>
-      </g>
-    </svg>`;
-
-    const tile = (key, label, val, u, d) => `<div class="tile tap" data-e="${key}">
-      <div class="lbl">${label}</div><div class="tn">${fmt(val, d)}<span>${hocEsc(u)}</span></div></div>`;
-
+  _build() {
+    const c = this._config;
+    const chev = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='16'%3E%3Cpath d='M8 4L4 8l4 4' fill='none' stroke='white' stroke-opacity='.85' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")";
     this.shadowRoot.innerHTML = `
 <style>
   :host { display: block; container-type: inline-size;
@@ -234,7 +179,7 @@ class HeatingOverviewCard extends HTMLElement {
   .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
   .pill.on { background: color-mix(in srgb, var(--hc-hot) 16%, transparent); color: var(--hc-hot); }
   .pill.warn { background: color-mix(in srgb, #d9a400 20%, transparent); color: #b88700; }
-  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 16px; align-items: center; }
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: 20px; align-items: center; }
   .sec { margin-top: 16px; }
   .sec > .lbl { margin-bottom: 4px; }
   .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
@@ -243,35 +188,171 @@ class HeatingOverviewCard extends HTMLElement {
   .tn span { font-size: .85rem; color: var(--hc-muted); margin-left: 4px; font-weight: 400; }
   svg { width: 100%; height: auto; display: block; overflow: visible; }
   .tap { cursor: pointer; }
-  .lbl { font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; fill: var(--hc-muted); color: var(--hc-muted); }
-  .tiles .lbl, .sec > .lbl { font-size: .7rem; }
+  .lbl { font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--hc-muted); line-height: 1.2; }
+  .c { text-align: center; }
   .ax { font-size: 9px; fill: var(--hc-muted); }
   .grid { stroke: var(--hc-line); stroke-width: .6; }
   .g-track { fill: none; stroke: var(--hc-line); stroke-width: 12; stroke-linecap: round; }
   .g-val { fill: none; stroke: var(--hc-hot); stroke-width: 12; stroke-linecap: round; }
   .g-num { font-size: 32px; font-weight: 500; fill: var(--hc-fg); font-variant-numeric: tabular-nums; }
   .g-unit { font-size: 12px; fill: var(--hc-muted); }
-  .tv { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
-  .dt { font-size: 20px; font-weight: 500; fill: var(--hc-fg); font-variant-numeric: tabular-nums; }
-  .fl { font-size: 12px; fill: var(--hc-muted); font-variant-numeric: tabular-nums; }
-  .flowdash { stroke: var(--hc-card); stroke-opacity: .8; animation: hcflow 2.4s linear infinite; }
-  @keyframes hcflow { to { stroke-dashoffset: -4; } }
   .empty { padding: 20px 0; text-align: center; color: var(--hc-muted); font-size: .85rem; }
-  @media (prefers-reduced-motion: reduce) { .flowdash { animation: none; } }
+
+  /* Scala temperatura */
+  .scale { display: grid; grid-template-columns: 1.4em minmax(0, 1fr) 1.4em; column-gap: 8px; align-items: center; }
+  .end { font-size: .7rem; color: var(--hc-muted); text-align: center; font-variant-numeric: tabular-nums; }
+  .lane { position: relative; height: 48px; grid-column: 2; }
+  .tag { position: absolute; transform: translateX(-50%); text-align: center; white-space: nowrap;
+    transition: left .9s cubic-bezier(.3,.7,.2,1); }
+  .tag b { display: block; font-size: 1.05rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .lane.top .tag { bottom: 12px; }
+  .lane.bot .tag { top: 12px; }
+  .stem { position: absolute; width: 2px; height: 12px; margin-left: -1px; background: var(--c, var(--hc-muted));
+    transition: left .9s cubic-bezier(.3,.7,.2,1); }
+  .lane.top .stem { bottom: 0; }
+  .lane.bot .stem { top: 0; }
+  .track { position: relative; height: 16px; border-radius: 8px; background: var(--hc-line); grid-column: 2; }
+  .ticks { position: absolute; inset: 0; border-radius: 8px;
+    background: repeating-linear-gradient(90deg, transparent 0 calc(var(--tick) - 1px), color-mix(in srgb, var(--hc-card) 70%, transparent) calc(var(--tick) - 1px) var(--tick)); }
+  .seg { position: absolute; top: 0; bottom: 0; min-width: 4px; border-radius: 8px;
+    background: linear-gradient(90deg, var(--c1), var(--c2));
+    transition: left .9s cubic-bezier(.3,.7,.2,1), width .9s cubic-bezier(.3,.7,.2,1); overflow: hidden; }
+  .seg::after { content: ""; position: absolute; inset: 0; opacity: 0; background: ${chev} repeat-x 0 50% / 12px 100%; }
+  .seg.flowing::after { opacity: 1; animation: hcchev var(--spd, 1.6s) linear infinite; }
+  .seg.rev::after { transform: scaleX(-1); }
+  @keyframes hcchev { to { background-position-x: -12px; } }
+  .mk { position: absolute; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%;
+    background: var(--c, var(--hc-muted)); border: 3px solid var(--hc-card); box-sizing: border-box;
+    transition: left .9s cubic-bezier(.3,.7,.2,1); }
+  .stats { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; margin-top: 14px; }
+  .stat { min-width: 0; }
+  .sn { font-size: 1.35rem; font-weight: 500; color: var(--hc-fg); font-variant-numeric: tabular-nums; line-height: 1.3; }
+  .sn span { font-size: .8rem; color: var(--hc-muted); margin-left: 4px; font-weight: 400; }
+  .sn.warn { color: #b88700; }
+  .fbar { height: 6px; border-radius: 3px; background: var(--hc-line); margin-top: 4px; overflow: hidden; }
+  .fbar i { display: block; height: 100%; border-radius: 3px; background: var(--hc-fg); opacity: .55; transition: width .9s cubic-bezier(.3,.7,.2,1); }
+  @media (prefers-reduced-motion: reduce) { .seg.flowing::after { animation: none; } .tag, .stem, .mk, .seg, .fbar i { transition: none; } }
   @container (max-width: 460px) { .hero { grid-template-columns: 1fr; } .gwrap { max-width: 260px; margin: 0 auto; width: 100%; } }
 </style>
 <ha-card>
-  <div class="head"><h2>${hocEsc(c.title)}</h2><span class="pill ${st.cls}">${st.label}</span></div>
+  <div class="head"><h2>${hocEsc(c.title)}</h2><span class="pill" id="pill"></span></div>
   <div class="hero">
-    <div class="gwrap tap" data-e="power"><div class="lbl" style="text-align:center">Potenza termica</div>${gauge}</div>
-    <div>${loop}</div>
+    <div class="gwrap tap" data-e="power"><div class="lbl c">Potenza termica</div><div id="gauge"></div></div>
+    <div class="scale" id="scale">
+      <span></span>
+      <div class="lane top"><i class="stem" id="stS"></i>
+        <div class="tag tap" id="tgS" data-e="supply_temp"><span class="lbl">Mandata</span><b id="vS"></b></div></div>
+      <span></span>
+      <span class="end">${c.temp_min}</span>
+      <div class="track" id="track"><div class="ticks" id="ticks"></div><div class="seg" id="seg"></div>
+        <i class="mk" id="mkR"></i><i class="mk" id="mkS"></i></div>
+      <span class="end">${c.temp_max}</span>
+      <span></span>
+      <div class="lane bot"><i class="stem" id="stR"></i>
+        <div class="tag tap" id="tgR" data-e="return_temp"><span class="lbl">Ritorno</span><b id="vR"></b></div></div>
+      <span></span>
+      <div class="stats">
+        <div class="stat"><div class="lbl">ΔT</div><div class="sn" id="snDT"><span id="vDT"></span></div></div>
+        <div class="stat tap" data-e="flow"><div class="lbl">Portata</div><div class="sn" id="snF"></div>
+          <div class="fbar"><i id="fFill"></i></div></div>
+      </div>
+    </div>
   </div>
-  <div class="tiles">
-    ${tile('energy_24h', 'Energia ultime 24 h', e24, uE24, e24 >= 100 ? 0 : 1)}
-    ${tile('energy_season', 'Da inizio stagione', eS, uES, eS >= 100 ? 0 : 1)}
-  </div>
-  ${c.history !== false ? `<div class="sec"><div class="lbl">Potenza ultime 24 h</div>${this._sparkline(loc)}</div>` : ''}
+  <div class="tiles" id="tiles"></div>
+  <div class="sec" id="sparkSec"><div class="lbl">Potenza ultime 24 h</div><div id="spark"></div></div>
 </ha-card>`;
+    const $ = (id) => this.shadowRoot.getElementById(id);
+    this._el = {};
+    ['pill', 'gauge', 'tiles', 'spark', 'sparkSec', 'ticks', 'seg', 'mkS', 'mkR', 'tgS', 'tgR', 'stS', 'stR',
+      'vS', 'vR', 'snDT', 'snF', 'fFill'].forEach((k) => { this._el[k] = $(k); });
+    const span = c.temp_max - c.temp_min;
+    this._el.ticks.style.setProperty('--tick', `${(10 / span) * 100}%`);
+    if (c.history === false) this._el.sparkSec.hidden = true;
+    this._built = true;
+  }
+
+  _render() {
+    if (!this._built) this._build();
+    const c = this._config, S = this._hass.states, E = this._el;
+    const loc = (this._hass.locale && this._hass.locale.language) || 'it';
+    const fmt = (v, d) => (Number.isFinite(v)
+      ? v.toLocaleString(loc, { minimumFractionDigits: d, maximumFractionDigits: d }) : '—');
+
+    const sup = hocNum(S[c.supply_temp]), ret = hocNum(S[c.return_temp]);
+    const flow = hocNum(S[c.flow]), pw = hocNum(S[c.power]);
+    const e24 = hocNum(S[c.energy_24h]), eS = hocNum(S[c.energy_season]);
+    const uT = hocUnit(S[c.supply_temp]) || '°C';
+    const uF = hocUnit(S[c.flow]), uP = hocUnit(S[c.power]);
+    const uE24 = hocUnit(S[c.energy_24h]), uES = hocUnit(S[c.energy_season]);
+    const dT = sup - ret;
+
+    const kW = uP === 'kW';
+    const pMax = c.power_max ?? (kW ? 3 : 3000);
+    const thr = c.active_threshold ?? (kW ? 0.05 : 50);
+    const flowMax = c.flow_max ?? ({ 'l/min': 20, 'L/min': 20, 'l/h': 1200, 'L/h': 1200, 'm³/h': 1.2 }[uF] || 20);
+    const active = Number.isFinite(pw) && pw > thr;
+
+    let st = { label: 'Spento', cls: 'off' };
+    if (!Number.isFinite(pw)) st = { label: 'Non disponibile', cls: 'na' };
+    else if (active && Number.isFinite(dT) && dT < 0) st = { label: 'Anomalia ΔT', cls: 'warn' };
+    else if (active) st = { label: 'In funzione', cls: 'on' };
+    E.pill.className = `pill ${st.cls}`;
+    E.pill.textContent = st.label;
+
+    // Gauge potenza
+    const pct = Number.isFinite(pw) ? hocClamp(pw / pMax, 0, 1) * 100 : 0;
+    E.gauge.innerHTML = `<svg viewBox="0 0 200 124" role="img" aria-label="Potenza termica">
+      <path d="M20 100A80 80 0 0 1 180 100" pathLength="100" class="g-track"/>
+      ${pct > 0.5 ? `<path d="M20 100A80 80 0 0 1 180 100" pathLength="100" class="g-val" stroke-dasharray="${pct.toFixed(2)} 100"/>` : ''}
+      <text x="100" y="88" text-anchor="middle" class="g-num">${fmt(pw, kW ? 2 : 0)}</text>
+      <text x="100" y="106" text-anchor="middle" class="g-unit">${hocEsc(uP)}</text>
+      <text x="20" y="120" text-anchor="middle" class="ax">0</text>
+      <text x="180" y="120" text-anchor="middle" class="ax">${fmt(pMax, kW ? 1 : 0)}</text>
+    </svg>`;
+
+    // Scala temperatura: marcatori + tratto ΔT (le posizioni sono animate via CSS transition)
+    const pos = (t) => (Number.isFinite(t) ? hocClamp((t - c.temp_min) / (c.temp_max - c.temp_min), 0, 1) * 100 : null);
+    const pS = pos(sup), pR = pos(ret);
+    const cS = this._tempColor(sup), cR = this._tempColor(ret);
+    const place = (mk, tg, stem, p, col) => {
+      mk.style.visibility = tg.style.visibility = stem.style.visibility = p === null ? 'hidden' : 'visible';
+      if (p === null) return;
+      mk.style.left = `${p}%`; stem.style.left = `${p}%`;
+      tg.style.left = `${hocClamp(p, 14, 86)}%`;
+      mk.style.setProperty('--c', col); stem.style.setProperty('--c', col);
+    };
+    place(E.mkS, E.tgS, E.stS, pS, cS);
+    place(E.mkR, E.tgR, E.stR, pR, cR);
+    E.vS.textContent = `${fmt(sup, 1)} ${uT}`; E.vS.style.color = cS;
+    E.vR.textContent = `${fmt(ret, 1)} ${uT}`; E.vR.style.color = cR;
+
+    const both = pS !== null && pR !== null;
+    E.seg.style.visibility = both ? 'visible' : 'hidden';
+    if (both) {
+      const lo = Math.min(pS, pR), hi = Math.max(pS, pR);
+      E.seg.style.left = `${lo}%`;
+      E.seg.style.width = `${hi - lo}%`;
+      E.seg.style.setProperty('--c1', pS <= pR ? cS : cR);
+      E.seg.style.setProperty('--c2', pS <= pR ? cR : cS);
+      // Frecce: calore ceduto da mandata verso ritorno; velocità legata alla portata.
+      const flowing = Number.isFinite(flow) && flow > 0 && Math.abs(dT) > 0.05;
+      E.seg.classList.toggle('flowing', flowing);
+      E.seg.classList.toggle('rev', pS < pR);
+      E.seg.style.setProperty('--spd', `${hocClamp(2.4 - 1.8 * (flow / flowMax || 0), 0.6, 2.4).toFixed(2)}s`);
+    }
+
+    E.snDT.innerHTML = `${fmt(dT, 1)}<span>K</span>`;
+    E.snDT.classList.toggle('warn', Number.isFinite(dT) && dT < 0);
+    E.snF.innerHTML = `${fmt(flow, flow >= 100 ? 0 : 1)}<span>${hocEsc(uF)}</span>`;
+    E.fFill.style.width = `${Number.isFinite(flow) ? hocClamp(flow / flowMax, 0, 1) * 100 : 0}%`;
+
+    // Energia e storico
+    const tile = (key, label, val, u, d) => `<div class="tile tap" data-e="${key}">
+      <div class="lbl">${label}</div><div class="tn">${fmt(val, d)}<span>${hocEsc(u)}</span></div></div>`;
+    E.tiles.innerHTML =
+      tile('energy_24h', 'Energia ultime 24 h', e24, uE24, e24 >= 100 ? 0 : 1) +
+      tile('energy_season', 'Da inizio stagione', eS, uES, eS >= 100 ? 0 : 1);
+    if (c.history !== false) E.spark.innerHTML = this._sparkline(loc);
   }
 }
 

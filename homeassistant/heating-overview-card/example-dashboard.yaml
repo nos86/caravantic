@@ -13,6 +13,7 @@ energy_season: sensor.riscaldamento_energia_stagione  # obbligatorio
 # Opzionali (valori di default mostrati)
 power_max: 3000        # fondo scala gauge, nell'unità del sensore potenza (3 se kW)
 active_threshold: 50   # soglia "in funzione", nell'unità del sensore potenza (0.05 se kW)
-temp_min: 20           # °C: colore "freddo" del circuito
-temp_max: 80           # °C: colore "caldo" del circuito
+temp_min: 0            # °C: inizio scala di mandata/ritorno
+temp_max: 80           # °C: fine scala
+flow_max: 20           # fondo scala barra portata, nell'unità del sensore (default: 20 l/min, 1200 l/h)
 history: true          # grafico potenza 24 h (usa il recorder di HA)
